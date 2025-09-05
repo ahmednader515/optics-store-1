@@ -6,7 +6,7 @@ import Search from "./search";
 import Menu from "./menu";
 import Sidebar from "./sidebar";
 import data from "@/lib/data";
-import { ShoppingCart, User, Package, Home, Shield } from "lucide-react";
+import { ShoppingCart, User, Package, Home, Shield, Glasses } from "lucide-react";
 import MobileCartCount from './mobile-cart-count'
 
 // Arabic translations for categories
@@ -59,11 +59,11 @@ export default async function Header() {
                 <Link href="/">
                   <Image
                     src={site.logo}
-                    width={314}
-                    height={173}
+                    width={914}
+                    height={975}
                     alt={`${site.name} logo`}
                     className="w-16 h-auto sm:w-20 sm:h-auto"
-                    style={{ aspectRatio: '314/173' }}
+                    style={{ aspectRatio: '914/975' }}
                   />
                 </Link>
               </div>
@@ -118,7 +118,7 @@ export default async function Header() {
       {/* Mobile Bottom Navigation - Fixed at bottom on mobile only */}
       <div className="fixed bottom-4 left-4 right-4 z-50 md:hidden" dir="rtl">
         <div className="bg-white border border-gray-200 rounded-full shadow-lg">
-          <div className="flex items-center justify-center gap-6 sm:gap-8 py-4 px-6">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 py-4 px-6">
           {/* Homepage Button */}
           <Link href="/" className="flex flex-col items-center gap-1">
             <Home className="w-6 h-6 text-gray-600" />
@@ -134,6 +134,13 @@ export default async function Header() {
             <span className="text-xs text-gray-600">السلة</span>
           </Link>
           
+          {/* Glasses Button - Center with black background, larger size, and extending out */}
+          <Link href="/try-on" className="flex flex-col items-center">
+            <div className="bg-black rounded-full p-4 -mt-6 shadow-lg border-4 border-white">
+              <Glasses className="w-10 h-10 text-white" />
+            </div>
+          </Link>
+          
           {/* User Actions */}
           {session ? (
             <>
@@ -141,12 +148,6 @@ export default async function Header() {
               <Link href="/account" className="flex flex-col items-center gap-1">
                 <User className="w-6 h-6 text-gray-600" />
                 <span className="text-xs text-gray-600">حسابي</span>
-              </Link>
-              
-              {/* Orders Button */}
-              <Link href="/account/orders" className="flex flex-col items-center gap-1">
-                <Package className="w-6 h-6 text-gray-600" />
-                <span className="text-xs text-gray-600">طلباتي</span>
               </Link>
               
               {/* Admin Button - Only show for Admin users */}
