@@ -1,5 +1,6 @@
 import HomeCarousel from '@/components/shared/home/home-carousel'
 import ProductSlider from '@/components/shared/product/product-slider'
+import GlassesChat from '@/components/shared/chat/glasses-chat'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -57,14 +58,40 @@ async function CategoriesSection({ categories }: { categories: Array<{ name: str
     <Card className='w-full rounded-xl shadow-sm'>
       <CardContent className='card-mobile'>
         <h2 className='text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-right text-gray-800'>استكشف الفئات</h2>
-        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4'>
+        
+        {/* Mobile: Horizontal scrollable row */}
+        <div className='flex gap-4 overflow-x-auto pb-2 md:hidden scrollbar-hide'>
+          {categories.map((category, index: number) => (
+            <Link
+              key={category.name}
+              href={`/search?category=${category.name}`}
+              className='flex flex-col items-center group flex-shrink-0'
+            >
+              <div className='relative overflow-hidden rounded-full bg-gray-50 mb-2 w-16 h-16 flex items-center justify-center shadow-sm border-2 border-gray-100'>
+                <Image
+                  src={category.image || sampleImages[index % sampleImages.length]}
+                  alt={category.name}
+                  width={64}
+                  height={64}
+                  className='object-cover rounded-full transition-transform duration-300 group-hover:scale-105'
+                />
+              </div>
+              <p className='text-center text-xs text-gray-700 group-hover:text-orange-600 transition-colors duration-200 whitespace-nowrap'>
+                {category.name}
+              </p>
+            </Link>
+          ))}
+        </div>
+        
+        {/* Desktop: Grid layout */}
+        <div className='hidden md:grid grid-cols-4 lg:grid-cols-6 gap-4'>
           {categories.map((category, index: number) => (
             <Link
               key={category.name}
               href={`/search?category=${category.name}`}
               className='flex flex-col items-center group'
             >
-              <div className='relative overflow-hidden rounded-full bg-gray-50 mb-2 sm:mb-3 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-sm border-2 border-gray-100'>
+              <div className='relative overflow-hidden rounded-full bg-gray-50 mb-3 w-20 h-20 flex items-center justify-center shadow-sm border-2 border-gray-100'>
                 <Image
                   src={category.image || sampleImages[index % sampleImages.length]}
                   alt={category.name}
@@ -73,7 +100,7 @@ async function CategoriesSection({ categories }: { categories: Array<{ name: str
                   className='object-cover rounded-full transition-transform duration-300 group-hover:scale-105'
                 />
               </div>
-              <p className='text-center text-xs sm:text-sm text-gray-700 group-hover:text-orange-600 transition-colors duration-200'>
+              <p className='text-center text-sm text-gray-700 group-hover:text-orange-600 transition-colors duration-200'>
                 {category.name}
               </p>
             </Link>
@@ -186,6 +213,9 @@ export default async function HomePage() {
           <CategoryProductsSection categories={categoryList.map(c => c.name)} />
         </Suspense>
       </div>
+      
+      {/* Chat Component */}
+      <GlassesChat />
     </div>
   )
 }
