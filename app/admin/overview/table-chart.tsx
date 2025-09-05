@@ -12,6 +12,7 @@ type TableChartProps = {
     image?: string
     value: number
     id?: string
+    slug?: string
   }[]
 }
 
@@ -107,13 +108,13 @@ export default function TableChart({
   
   return (
     <div className='space-y-3'>
-      {dataWithPercentage.map(({ label, id, value, image, percentage }, index) => (
+      {dataWithPercentage.map(({ label, id, value, image, percentage, slug }, index) => (
         <div
           key={id || `${label}-${index}`}
           className='grid grid-cols-[100px_1fr_80px] md:grid-cols-[250px_1fr_80px] gap-2 space-y-4  '
         >
           {image ? (
-            <Link className='flex items-end' href={`/admin/products/${id}`}>
+            <Link className='flex items-end' href={slug ? `/product/${slug}` : `/admin/products/${id}`}>
               <Image
                 className='rounded border  aspect-square object-scale-down max-w-full h-auto mx-auto mr-1'
                 src={image!}

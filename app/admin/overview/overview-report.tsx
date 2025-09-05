@@ -28,7 +28,15 @@ import ProductPrice from '@/components/shared/product/product-price'
 import TableChart from './table-chart'
 import { Skeleton } from '@/components/ui/skeleton'
 
-export default function OverviewReport({ initialDate, initialHeader }: { initialDate?: DateRange; initialHeader?: { [key: string]: any } }) {
+export default function OverviewReport({ 
+  initialDate, 
+  initialHeader, 
+  initialLatestOrders 
+}: { 
+  initialDate?: DateRange; 
+  initialHeader?: { [key: string]: any };
+  initialLatestOrders?: IOrderList[];
+}) {
   const [date, setDate] = useState<DateRange | undefined>(
     initialDate || {
       from: calculatePastDate(30),
@@ -39,9 +47,9 @@ export default function OverviewReport({ initialDate, initialHeader }: { initial
   // Progressive state slices
   const [header, setHeader] = useState<{ [key: string]: any } | undefined>(initialHeader)
   const [charts, setCharts] = useState<{ [key: string]: any } | undefined>(undefined)
-  const [latest, setLatest] = useState<IOrderList[] | undefined>(undefined)
+  const [latest, setLatest] = useState<IOrderList[] | undefined>(initialLatestOrders)
   // Skip first header fetch if SSR provided it
-  const skipFirstFetchRef = useRef<boolean>(!!initialHeader)
+  const skipFirstFetchRef = useRef<boolean>(!!initialHeader && !!initialLatestOrders)
   const [isPending, startTransition] = useTransition()
   useEffect(() => {
     if (date) {
@@ -52,7 +60,7 @@ export default function OverviewReport({ initialDate, initialHeader }: { initial
           try {
             const chartsData = await getOverviewChartsData(date)
             setCharts(chartsData)
-            const latestOrders = await getLatestOrdersForOverview()
+            const latestOrders = await getLatestOrdersForOverview(undefined, date)
             setLatest(latestOrders as any)
           } catch (err) {
             console.error('Progressive fetch error:', err)
@@ -69,7 +77,7 @@ export default function OverviewReport({ initialDate, initialHeader }: { initial
           const chartsData = await getOverviewChartsData(date)
           setCharts(chartsData)
           // Finally latest orders
-          const latestOrders = await getLatestOrdersForOverview()
+          const latestOrders = await getLatestOrdersForOverview(undefined, date)
           setLatest(latestOrders as any)
         } catch (error) {
           console.error('Error fetching overview data:', error)

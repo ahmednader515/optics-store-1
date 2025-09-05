@@ -437,11 +437,17 @@ export async function getOrderSummary(date: DateRange) {
     const productsCount = await prisma.product.count({ where: { createdAt: dateWhere } })
     const usersCount = await prisma.user.count({ where: { createdAt: dateWhere } })
     const totalSalesResult = await prisma.order.aggregate({
-      where: { createdAt: dateWhere },
+      where: { 
+        isPaid: true,  // Only count paid orders for total sales
+        createdAt: dateWhere 
+      },
       _sum: { totalPrice: true },
     })
     const monthlySalesData = await prisma.order.findMany({
-      where: { createdAt: { gte: new Date(date.from.getFullYear(), date.from.getMonth() - 5, 1) } },
+      where: { 
+        isPaid: true,  // Only count paid orders for monthly sales
+        createdAt: { gte: new Date(date.from.getFullYear(), date.from.getMonth() - 5, 1) } 
+      },
       select: { createdAt: true, totalPrice: true },
     })
     const topSalesProducts = await getTopSalesProductsFast(date)
@@ -499,9 +505,19 @@ export async function getOverviewHeaderStats(date: DateRange) {
     const productsCount = await prisma.product.count({ where: { createdAt: dateWhere } })
     const usersCount = await prisma.user.count({ where: { createdAt: dateWhere } })
     const totalSalesResult = await prisma.order.aggregate({
-      where: { createdAt: dateWhere },
+      where: { 
+        isPaid: true,  // Only count paid orders for total sales
+        createdAt: dateWhere 
+      },
       _sum: { totalPrice: true },
     })
+    
+    // Debug logging
+    console.log('🔍 Client-side getOverviewHeaderStats debug:')
+    console.log('Date range:', date)
+    console.log('Orders count:', ordersCount)
+    console.log('Total sales (paid only):', Number(totalSalesResult._sum.totalPrice || 0))
+    
     return {
       ordersCount,
       productsCount,
@@ -518,7 +534,10 @@ export async function getOverviewChartsData(date: DateRange) {
   try {
     if (!date?.from || !date?.to) throw new Error('Invalid date range')
     const monthlySalesData = await prisma.order.findMany({
-      where: { createdAt: { gte: new Date(date.from.getFullYear(), date.from.getMonth() - 5, 1) } },
+      where: { 
+        isPaid: true,  // Only count paid orders for monthly sales
+        createdAt: { gte: new Date(date.from.getFullYear(), date.from.getMonth() - 5, 1) } 
+      },
       select: { createdAt: true, totalPrice: true },
     })
     const monthlySalesMap = new Map<string, number>()
@@ -545,17 +564,39 @@ export async function getOverviewChartsData(date: DateRange) {
   }
 }
 
-export async function getLatestOrdersForOverview(limit?: number) {
+export async function getLatestOrdersForOverview(limit?: number, dateRange?: DateRange) {
   try {
     const {
       common: { pageSize },
     } = data.settings[0]
     const take = limit || pageSize
+    
+    // Build where clause based on date range - ONLY PAID ORDERS
+    const whereClause: any = {
+      isPaid: true,  // Only show paid orders to match total income
+    }
+    if (dateRange?.from && dateRange?.to) {
+      whereClause.createdAt = {
+        gte: dateRange.from,
+        lte: dateRange.to,
+      }
+    }
+    
     const latestOrders = await prisma.order.findMany({
+      where: whereClause,
       include: { user: { select: { name: true } } },
       orderBy: { createdAt: 'desc' },
       take,
     })
+    
+    // Debug logging
+    console.log('🔍 getLatestOrdersForOverview debug:')
+    console.log('Date range:', dateRange)
+    console.log('Where clause:', whereClause)
+    console.log('Orders found (PAID ONLY):', latestOrders.length)
+    console.log('Orders total (PAID ONLY):', latestOrders.reduce((sum, order) => sum + Number(order.totalPrice), 0))
+    console.log('Orders details:', latestOrders.map(o => ({ id: o.id, totalPrice: o.totalPrice, isPaid: o.isPaid, createdAt: o.createdAt })))
+    
     return JSON.parse(JSON.stringify(latestOrders))
   } catch (error) {
     console.error('Error in getLatestOrdersForOverview:', error)
@@ -568,6 +609,7 @@ async function getSalesChartData(date: DateRange) {
 
   const orders = await prisma.order.findMany({
     where: {
+      isPaid: true,  // Only count paid orders for sales chart
       createdAt: {
         gte: date.from,
         lte: date.to,
@@ -592,25 +634,55 @@ async function getSalesChartData(date: DateRange) {
 }
 
 async function getTopSalesProductsFast(date: DateRange) {
+  // Get order items from PAID orders only
   const rows = await prisma.orderItem.findMany({
-    where: { order: { createdAt: { gte: date.from, lte: date.to } } },
-    select: { productId: true, name: true, image: true, price: true, quantity: true },
+    where: { 
+      order: { 
+        isPaid: true,  // Only count paid orders
+        createdAt: { gte: date.from, lte: date.to } 
+      } 
+    },
+    select: { productId: true, name: true, price: true, quantity: true },
   })
-  const productSales = new Map<string, { name: string; image: string; totalSales: number }>()
+  
+  // Get current product data from Product table
+  const productIds = [...new Set(rows.map(r => r.productId))]
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: { id: true, name: true, images: true, slug: true },
+  })
+  
+  const productMap = new Map(products.map(p => [p.id, p]))
+  const productSales = new Map<string, { name: string; image: string; totalSales: number; slug: string }>()
+  
   for (const r of rows) {
-    const prev = productSales.get(r.productId) || { name: r.name, image: r.image, totalSales: 0 }
+    const product = productMap.get(r.productId)
+    if (!product) continue
+    
+    const prev = productSales.get(r.productId) || { 
+      name: product.name, 
+      image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : '/images/placeholder.jpg',
+      totalSales: 0,
+      slug: product.slug
+    }
     prev.totalSales += Number(r.price) * Number(r.quantity)
     productSales.set(r.productId, prev)
   }
+  
   return Array.from(productSales.entries())
-    .map(([id, data]) => ({ id, label: data.name, image: data.image, value: data.totalSales }))
+    .map(([id, data]) => ({ id, label: data.name, image: data.image, value: data.totalSales, slug: data.slug }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 6)
 }
 
 async function getTopSalesCategoriesFast(date: DateRange, limit = 5) {
   const rows = await prisma.orderItem.findMany({
-    where: { order: { createdAt: { gte: date.from, lte: date.to } } },
+    where: { 
+      order: { 
+        isPaid: true,  // Only count paid orders
+        createdAt: { gte: date.from, lte: date.to } 
+      } 
+    },
     select: { category: true, quantity: true },
   })
   const categorySales = new Map<string, number>()

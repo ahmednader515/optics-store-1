@@ -46,6 +46,20 @@ const DashboardPage = async () => {
     prisma.user.count(),
   ])
 
+  // Also fetch initial latest orders with date range - ONLY PAID ORDERS
+  const initialLatestOrders = await prisma.order.findMany({
+    where: {
+      isPaid: true,  // Only show paid orders to match total income
+      createdAt: {
+        gte: initialDate.from,
+        lte: initialDate.to,
+      },
+    },
+    include: { user: { select: { name: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  })
+
   const initialHeader = {
     ordersCount: totalOrders,
     totalSales: Number(totalRevenue._sum.totalPrice || 0),
@@ -53,7 +67,20 @@ const DashboardPage = async () => {
     usersCount: totalUsers,
   }
 
-  return <OverviewReport initialDate={initialDate} initialHeader={initialHeader} />
+  // Debug logging
+  console.log('🔍 Server-side calculation debug:')
+  console.log('Date range:', initialDate)
+  console.log('Total orders (all):', totalOrders)
+  console.log('Total revenue (paid only):', Number(totalRevenue._sum.totalPrice || 0))
+  console.log('Latest orders count (PAID ONLY):', initialLatestOrders.length)
+  console.log('Latest orders total (PAID ONLY):', initialLatestOrders.reduce((sum, order) => sum + Number(order.totalPrice), 0))
+  console.log('Latest orders details:', initialLatestOrders.map(o => ({ id: o.id, totalPrice: o.totalPrice, isPaid: o.isPaid, createdAt: o.createdAt })))
+
+  return <OverviewReport 
+    initialDate={initialDate} 
+    initialHeader={initialHeader}
+    initialLatestOrders={JSON.parse(JSON.stringify(initialLatestOrders))}
+  />
 }
 
 export default DashboardPage
