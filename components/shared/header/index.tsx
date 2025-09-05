@@ -150,6 +150,14 @@ export default async function Header() {
                 <span className="text-xs text-gray-600">حسابي</span>
               </Link>
               
+              {/* Orders Button - Only show for regular users (non-admin) */}
+              {session.user.role !== 'Admin' && (
+                <Link href="/account/orders" className="flex flex-col items-center gap-1">
+                  <Package className="w-6 h-6 text-gray-600" />
+                  <span className="text-xs text-gray-600">طلباتي</span>
+                </Link>
+              )}
+              
               {/* Admin Button - Only show for Admin users */}
               {session.user.role === 'Admin' && (
                 <Link href="/admin/overview" className="flex flex-col items-center gap-1">
