@@ -101,8 +101,10 @@ export default function CartPage() {
                     <h3 className='font-semibold text-sm sm:text-base mb-1'>{item.name}</h3>
                     <p className='text-xs sm:text-sm text-muted-foreground mb-2'>
                       {item.color && `اللون: ${item.color}`}
-                      {item.color && item.size && ` | `}
+                      {item.color && (item.size || item.lensSize) && ` | `}
                       {item.size && `الحجم: ${item.size}`}
+                      {item.size && item.lensSize && ` | `}
+                      {item.lensSize && `حجم العدسة: ${item.lensSize}`}
                     </p>
                     <p className='font-medium text-sm sm:text-base mb-3 sm:mb-0'>
                       {formatPrice(item.price)} × {item.quantity}

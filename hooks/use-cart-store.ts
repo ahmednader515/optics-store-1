@@ -79,7 +79,8 @@ const useCartStore = create(
           (x) =>
             x.product === item.product &&
             x.color === item.color &&
-            x.size === item.size
+            x.size === item.size &&
+            x.lensSize === item.lensSize
         )
 
         if (existItem) {
@@ -96,7 +97,8 @@ const useCartStore = create(
           ? items.map((x) =>
               x.product === item.product &&
               x.color === item.color &&
-              x.size === item.size
+              x.size === item.size &&
+              x.lensSize === item.lensSize
                 ? { ...existItem, quantity: existItem.quantity + quantity }
                 : x
             )
@@ -116,7 +118,8 @@ const useCartStore = create(
           (x) =>
             x.product === item.product &&
             x.color === item.color &&
-            x.size === item.size
+            x.size === item.size &&
+            x.lensSize === item.lensSize
         )
         if (!foundItem) {
           throw new Error('Item not found in cart')
@@ -129,13 +132,15 @@ const useCartStore = create(
           (x) =>
             x.product === item.product &&
             x.color === item.color &&
-            x.size === item.size
+            x.size === item.size &&
+            x.lensSize === item.lensSize
         )
         if (!exist) return
         const updatedCartItems = items.map((x) =>
           x.product === item.product &&
           x.color === item.color &&
-          x.size === item.size
+          x.size === item.size &&
+          x.lensSize === item.lensSize
             ? { ...exist, quantity: quantity }
             : x
         )
@@ -156,7 +161,8 @@ const useCartStore = create(
           (x) =>
             x.product !== item.product ||
             x.color !== item.color ||
-            x.size !== item.size
+            x.size !== item.size ||
+            x.lensSize !== item.lensSize
         )
         set({
           cart: {

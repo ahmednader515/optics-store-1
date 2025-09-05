@@ -51,6 +51,7 @@ const productDefaultValues: IProductInput = {
   tags: [],
   sizes: [],
   colors: [],
+  lensSizes: [],
   ratingDistribution: [],
   reviews: [],
 }
@@ -487,6 +488,168 @@ const ProductForm = ({
               )}
             />
           </div>
+
+          {/* Product Variants */}
+          <div className='space-y-4'>
+            <h3 className='text-lg font-semibold text-gray-900'>خيارات المنتج</h3>
+            
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+              {/* Colors */}
+              <FormField
+                control={form.control}
+                name='colors'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-gray-900 font-semibold'>الألوان</FormLabel>
+                    <FormControl>
+                      <div className='space-y-2'>
+                        <Input
+                          placeholder='أضف لون (مثل: أحمر)'
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              const value = e.currentTarget.value.trim()
+                              if (value && !field.value.includes(value)) {
+                                field.onChange([...field.value, value])
+                                e.currentTarget.value = ''
+                              }
+                            }
+                          }}
+                          className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
+                        />
+                        <div className='flex flex-wrap gap-2'>
+                          {field.value.map((color, index) => (
+                            <div
+                              key={index}
+                              className='flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm'
+                            >
+                              <div
+                                className='w-4 h-4 rounded-full border'
+                                style={{ backgroundColor: color.toLowerCase() }}
+                              />
+                              <span>{color}</span>
+                              <button
+                                type='button'
+                                onClick={() => {
+                                  const newColors = field.value.filter((_, i) => i !== index)
+                                  field.onChange(newColors)
+                                }}
+                                className='text-red-500 hover:text-red-700'
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Sizes */}
+              <FormField
+                control={form.control}
+                name='sizes'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-gray-900 font-semibold'>الأحجام</FormLabel>
+                    <FormControl>
+                      <div className='space-y-2'>
+                        <Input
+                          placeholder='أضف حجم (مثل: S)'
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              const value = e.currentTarget.value.trim()
+                              if (value && !field.value.includes(value)) {
+                                field.onChange([...field.value, value])
+                                e.currentTarget.value = ''
+                              }
+                            }
+                          }}
+                          className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
+                        />
+                        <div className='flex flex-wrap gap-2'>
+                          {field.value.map((size, index) => (
+                            <div
+                              key={index}
+                              className='flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm'
+                            >
+                              <span>{size}</span>
+                              <button
+                                type='button'
+                                onClick={() => {
+                                  const newSizes = field.value.filter((_, i) => i !== index)
+                                  field.onChange(newSizes)
+                                }}
+                                className='text-red-500 hover:text-red-700'
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Lens Sizes */}
+              <FormField
+                control={form.control}
+                name='lensSizes'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-gray-900 font-semibold'>أحجام العدسات</FormLabel>
+                    <FormControl>
+                      <div className='space-y-2'>
+                        <Input
+                          placeholder='أضف حجم عدسة (مثل: 52mm)'
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              const value = e.currentTarget.value.trim()
+                              if (value && !field.value.includes(value)) {
+                                field.onChange([...field.value, value])
+                                e.currentTarget.value = ''
+                              }
+                            }
+                          }}
+                          className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
+                        />
+                        <div className='flex flex-wrap gap-2'>
+                          {field.value.map((lensSize, index) => (
+                            <div
+                              key={index}
+                              className='flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm'
+                            >
+                              <span>{lensSize}</span>
+                              <button
+                                type='button'
+                                onClick={() => {
+                                  const newLensSizes = field.value.filter((_, i) => i !== index)
+                                  field.onChange(newLensSizes)
+                                }}
+                                className='text-red-500 hover:text-red-700'
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
           <div>
             <FormField
               control={form.control}

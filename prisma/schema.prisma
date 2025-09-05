@@ -57,6 +57,7 @@ model Product {
   tags               String[]    @default([])
   colors             String[]    @default(["White", "Red", "Black"])
   sizes              String[]    @default(["S", "M", "L"])
+  lensSizes          String[]    @default([])
   avgRating          Float       @default(0)
   numReviews         Int         @default(0)
   ratingDistribution Json?

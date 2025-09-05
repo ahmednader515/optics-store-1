@@ -24,6 +24,16 @@ export default function VirtualTryOn({ overlayImageUrl }: VirtualTryOnProps) {
   const landmarkerRef = React.useRef<any>(null)
   const rafRef = React.useRef<number | null>(null)
 
+  // Show overlay only when a face is detected
+  const [isFaceDetected, setIsFaceDetected] = React.useState<boolean>(false)
+  const faceDetectedRef = React.useRef<boolean>(false)
+
+  // Displayed overlay state (smoothed each frame)
+  const displayedPosRef = React.useRef<Point>({ x: 120, y: 120 })
+  const displayedScaleRef = React.useRef<number>(1.1)
+  const displayedRotRef = React.useRef<number>(0)
+  const lastFrameTimeRef = React.useRef<number>(0)
+
   // Overlay transform state
   const [position, setPosition] = React.useState<Point>({ x: 120, y: 120 })
   const [scale] = React.useState(1.1)
@@ -212,7 +222,7 @@ export default function VirtualTryOn({ overlayImageUrl }: VirtualTryOnProps) {
       }
 
       // Performance optimization: throttle detection on mobile, but always update overlay
-      const detectionInterval = isSmallScreen ? 100 : 33 // 10fps on mobile, 30fps on desktop
+      const detectionInterval = isSmallScreen ? 66 : 33 // ~15fps on mobile, 30fps on desktop
       const shouldDetect = now - lastDetectionTimeRef.current >= detectionInterval
       
       if (shouldDetect) {
@@ -237,10 +247,13 @@ export default function VirtualTryOn({ overlayImageUrl }: VirtualTryOnProps) {
           let targetScale = smoothScaleRef.current
           let targetRot = smoothRotRef.current
 
+          let detectedThisFrame = false
+
           if (landmarkerRef.current) {
             const results = await landmarkerRef.current.detectForVideo(video, now)
             const lm = results?.faceLandmarks?.[0]
             if (lm && lm.length) {
+              detectedThisFrame = true
               // Select eye corner landmarks by indices
               // Left eye outer (36x?), we use known FaceMesh indices
               const idx = {
@@ -281,6 +294,7 @@ export default function VirtualTryOn({ overlayImageUrl }: VirtualTryOnProps) {
           } else if (detectorRef.current) {
             const faces = await detectorRef.current.detect(video)
             if (faces && faces.length > 0) {
+              detectedThisFrame = true
               const box = faces[0].boundingBox
               const faceWidth = box.width * scaleCover
               let w = faceWidth * 1.35 * sizeScaleRef.current
@@ -294,6 +308,12 @@ export default function VirtualTryOn({ overlayImageUrl }: VirtualTryOnProps) {
             }
           }
 
+          // Update face detected state if changed
+          if (faceDetectedRef.current !== detectedThisFrame) {
+            faceDetectedRef.current = detectedThisFrame
+            setIsFaceDetected(detectedThisFrame)
+          }
+
           // Update target values for smoothing
           smoothPosRef.current = { x: targetX, y: targetY }
           smoothScaleRef.current = targetScale
@@ -304,10 +324,23 @@ export default function VirtualTryOn({ overlayImageUrl }: VirtualTryOnProps) {
       }
 
       // Always update overlay at full rAF rate for smooth rendering
-      const overlayWidth = smoothScaleRef.current * 320
+      const last = lastFrameTimeRef.current || now
+      const dt = now - last
+      lastFrameTimeRef.current = now
+      const smoothingMs = isSmallScreen ? 120 : 80
+      const alpha = 1 - Math.exp(-dt / smoothingMs)
+
+      // Exponential smoothing toward target
+      displayedPosRef.current.x += (smoothPosRef.current.x - displayedPosRef.current.x) * alpha
+      displayedPosRef.current.y += (smoothPosRef.current.y - displayedPosRef.current.y) * alpha
+      displayedScaleRef.current += (smoothScaleRef.current - displayedScaleRef.current) * alpha
+      displayedRotRef.current += (smoothRotRef.current - displayedRotRef.current) * alpha
+
+      const overlayWidth = displayedScaleRef.current * 320
       overlayEl.style.width = `${overlayWidth}px`
-      overlayEl.style.transform = `translate(${smoothPosRef.current.x}px, ${smoothPosRef.current.y}px) rotate(${smoothRotRef.current}deg)`
+      overlayEl.style.transform = `translate3d(${displayedPosRef.current.x}px, ${displayedPosRef.current.y}px, 0) rotate(${displayedRotRef.current}deg)`
       overlayEl.style.transformOrigin = 'top left'
+      overlayEl.style.willChange = 'transform,width'
       
       rafRef.current = requestAnimationFrame(loop)
     }
@@ -347,6 +380,7 @@ export default function VirtualTryOn({ overlayImageUrl }: VirtualTryOnProps) {
           ref={overlayRef}
           className="absolute left-0 top-0 cursor-move touch-none select-none"
           style={{
+            display: isFaceDetected ? 'block' : 'none',
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
             transformOrigin: 'center center',
           }}

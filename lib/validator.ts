@@ -44,6 +44,7 @@ export const ProductInputSchema = z.object({
   tags: z.array(z.string()).default([]),
   sizes: z.array(z.string()).default([]),
   colors: z.array(z.string()).default([]),
+  lensSizes: z.array(z.string()).default([]),
   avgRating: z.coerce
     .number()
     .min(0, 'Average rating must be at least 0')
@@ -85,6 +86,7 @@ export const OrderItemSchema = z.object({
   price: Price('Price'),
   size: z.string().optional(),
   color: z.string().optional(),
+  lensSize: z.string().optional(),
 })
 export const ShippingAddressSchema = z.object({
   street: z.string().min(1, 'العنوان (الشارع، الشقة، الجناح، الوحدة، إلخ) مطلوب'),
