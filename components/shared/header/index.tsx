@@ -43,10 +43,10 @@ export default async function Header() {
   
   return (
     <>
-      <header className="bg-white text-gray-800 font-cairo" dir="rtl">
+      <header className="bg-white text-gray-800 font-cairo sticky top-0 z-40 md:relative md:z-auto" dir="rtl">
         {/* Main Header - Clean Design */}
         <div className="bg-white border-b border-gray-200">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-4 py-2 sm:py-3 md:py-4">
             {/* Header Row */}
             <div className="flex items-center justify-between">
               {/* Hamburger Menu */}
@@ -62,7 +62,7 @@ export default async function Header() {
                     width={914}
                     height={975}
                     alt={`${site.name} logo`}
-                    className="w-16 h-auto sm:w-20 sm:h-auto"
+                    className="w-12 h-auto sm:w-16 sm:h-auto md:w-20 md:h-auto"
                     style={{ aspectRatio: '914/975' }}
                   />
                 </Link>

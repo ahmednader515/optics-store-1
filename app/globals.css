@@ -342,6 +342,26 @@ input, textarea, select, button, label, span, div, p, h1, h2, h3, h4, h5, h6, a,
     @apply p-4 sm:p-6 lg:p-8;
   }
   
+  /* Mobile categories section - remove margin and border radius */
+  .categories-mobile {
+    @apply w-full -mx-4 -my-2 rounded-none shadow-none;
+  }
+  
+  .categories-mobile .card-mobile {
+    @apply p-2;
+  }
+  
+  /* Ensure full width and no margins on mobile */
+  @media (max-width: 767px) {
+    .categories-mobile {
+      width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+  }
+  
   /* Mobile-first navigation */
   .nav-mobile {
     @apply flex flex-col sm:flex-row items-center gap-4 sm:gap-6;

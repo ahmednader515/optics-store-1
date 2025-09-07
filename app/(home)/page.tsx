@@ -56,7 +56,7 @@ async function CategoriesSection({ categories }: { categories: Array<{ name: str
   ]
 
   return (
-    <Card className='w-full rounded-xl shadow-sm'>
+    <Card className='w-full rounded-xl shadow-sm categories-mobile md:!mx-0 md:!my-0 md:!rounded-xl md:!shadow-sm'>
       <CardContent className='card-mobile'>
         
         {/* Mobile: Horizontal scrollable row */}
@@ -199,8 +199,8 @@ export default async function HomePage() {
   
   return (
     <div className="font-cairo" dir="rtl">
-      {/* Categories Section - Show first on mobile only */}
-      <div className='block md:hidden p-4 bg-gray-50'>
+      {/* Categories Section - Show first on mobile only, sticky */}
+      <div className='block md:hidden bg-gray-50 sticky top-16 z-30 md:relative md:z-auto'>
         <Suspense fallback={<CategoriesSkeleton />}>
           <CategoriesSection categories={categoryList} />
         </Suspense>
@@ -209,7 +209,7 @@ export default async function HomePage() {
       {/* Hero section loads immediately */}
       <HomeCarousel carousels={setting?.carousels as any[] || []} />
       
-      <div className='p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 bg-gray-50'>
+      <div className='p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 bg-gray-50 pt-0 md:pt-6'>
         {/* Categories Section - Show on desktop */}
         <div className='hidden md:block'>
           <Suspense fallback={<CategoriesSkeleton />}>
