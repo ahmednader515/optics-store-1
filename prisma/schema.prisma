@@ -168,6 +168,7 @@ model Setting {
   common                  Json
   site                    Json
   carousels               Json
+  videos                  Json?    @default("[]")
   availableLanguages      Json
   defaultLanguage         String
   availableCurrencies     Json

@@ -14,6 +14,7 @@ import data from '@/lib/data'
 import { updateSetting } from '@/lib/actions/setting.actions'
 import { UploadButton } from '@/lib/uploadthing'
 import CategoryManager from '@/components/admin/category-manager'
+import VideoManager from '@/components/admin/video-manager'
 import {
   DndContext,
   closestCenter,
@@ -47,6 +48,12 @@ interface SeasonalDiscount {
   endDate: string
   discountRate: number
   applicableCategories: string[]
+}
+
+interface VideoItem {
+  id: string
+  url: string
+  title: string
 }
 
 // Sortable Carousel Item Component
@@ -191,6 +198,7 @@ function SortableCarouselItem({
 
 export default function SettingsForm({ setting }: { setting: any }) {
   const [carouselItems, setCarouselItems] = useState<CarouselItem[]>([])
+  const [videos, setVideos] = useState<VideoItem[]>([])
   const [deliverySettings, setDeliverySettings] = useState({
     deliveryTimeHours: 4,
     deliveryPrice: 4.99,
@@ -237,6 +245,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
     const settings = setting || data.settings[0]
     if (settings) {
       setCarouselItems(settings.carousels || [])
+      setVideos(settings.videos || [])
       if (settings.deliverySettings) {
         const delivery = settings.deliverySettings
         if ('deliveryTimeHours' in delivery) {
@@ -349,6 +358,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
       const newSetting = {
         ...data.settings[0],
         carousels: carouselItems,
+        videos: videos,
         deliverySettings,
         taxSettings,
         productPricing,
@@ -426,6 +436,9 @@ export default function SettingsForm({ setting }: { setting: any }) {
 
       {/* Category Management */}
       <CategoryManager />
+
+      {/* Video Management */}
+      <VideoManager videos={videos} onVideosChange={setVideos} />
 
       {/* Delivery Settings */}
       <Card>

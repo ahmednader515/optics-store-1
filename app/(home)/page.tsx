@@ -1,4 +1,5 @@
 import HomeCarousel from '@/components/shared/home/home-carousel'
+import VideoSection from '@/components/shared/home/video-section'
 import ProductSlider from '@/components/shared/product/product-slider'
 import GlassesChat from '@/components/shared/chat/glasses-chat'
 import { Card, CardContent } from '@/components/ui/card'
@@ -215,6 +216,9 @@ export default async function HomePage() {
             <CategoriesSection categories={categoryList} />
           </Suspense>
         </div>
+        
+        {/* Video Section - Below categories on desktop, same position on mobile */}
+        <VideoSection videos={setting?.videos as any[] || []} />
         
         {/* Category Products Sections - Load after categories */}
         <Suspense fallback={<ProductSliderSkeleton title="المنتجات" />}>

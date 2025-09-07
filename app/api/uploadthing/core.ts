@@ -25,6 +25,25 @@ export const ourFileRouter = {
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId }
     }),
+
+  videoUploader: f({ video: { maxFileSize: '32MB' } })
+    // Set permissions and file types for this FileRoute
+    .middleware(async () => {
+      // This code runs on your server before upload
+      const session = await auth()
+
+      // If you throw, the user will not be able to upload
+      if (!session) throw new UploadThingError('Unauthorized')
+
+      // Whatever is returned here is accessible in onUploadComplete as `metadata`
+      return { userId: session?.user?.id }
+    })
+    .onUploadComplete(async ({ metadata }) => {
+      // This code RUNS ON YOUR SERVER after upload
+
+      // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
+      return { uploadedBy: metadata.userId }
+    }),
 } satisfies FileRouter
 
 export type OurFileRouter = typeof ourFileRouter
