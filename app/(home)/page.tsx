@@ -57,7 +57,6 @@ async function CategoriesSection({ categories }: { categories: Array<{ name: str
   return (
     <Card className='w-full rounded-xl shadow-sm'>
       <CardContent className='card-mobile'>
-        <h2 className='text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-right text-gray-800'>استكشف الفئات</h2>
         
         {/* Mobile: Horizontal scrollable row */}
         <div className='flex gap-4 overflow-x-auto pb-2 md:hidden scrollbar-hide'>
@@ -199,14 +198,23 @@ export default async function HomePage() {
   
   return (
     <div className="font-cairo" dir="rtl">
+      {/* Categories Section - Show first on mobile only */}
+      <div className='block md:hidden p-4 bg-gray-50'>
+        <Suspense fallback={<CategoriesSkeleton />}>
+          <CategoriesSection categories={categoryList} />
+        </Suspense>
+      </div>
+      
       {/* Hero section loads immediately */}
       <HomeCarousel carousels={setting?.carousels as any[] || []} />
       
       <div className='p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 bg-gray-50'>
-        {/* Categories Section - Load first */}
-        <Suspense fallback={<CategoriesSkeleton />}>
-          <CategoriesSection categories={categoryList} />
-        </Suspense>
+        {/* Categories Section - Show on desktop */}
+        <div className='hidden md:block'>
+          <Suspense fallback={<CategoriesSkeleton />}>
+            <CategoriesSection categories={categoryList} />
+          </Suspense>
+        </div>
         
         {/* Category Products Sections - Load after categories */}
         <Suspense fallback={<ProductSliderSkeleton title="المنتجات" />}>
