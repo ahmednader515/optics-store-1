@@ -2,11 +2,15 @@
 
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { Play } from 'lucide-react'
 
 interface VideoItem {
   id: string
   url: string
   title: string
+  link?: string
 }
 
 interface VideoSectionProps {
@@ -54,12 +58,23 @@ export default function VideoSection({ videos }: VideoSectionProps) {
                       e.currentTarget.pause()
                     }}
                   />
-                  {/* Title overlay on hover */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-end justify-center">
-                    <div className="transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 p-3">
-                      <p className="text-white text-sm font-medium text-center bg-black bg-opacity-50 rounded px-2 py-1">
+                  {/* Always visible overlay with title and button - Mobile: bottom layout */}
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-end p-4">
+                    <div className="flex items-center justify-between w-full">
+                      <h3 className="text-white text-lg font-bold drop-shadow-lg flex-1 text-right">
                         {video.title}
-                      </p>
+                      </h3>
+                      {video.link && (
+                        <Link href={video.link} className="mr-3">
+                          <Button 
+                            size="sm" 
+                            className="bg-white text-black hover:bg-gray-100 font-medium p-2 rounded-full shadow-lg"
+                            title="عرض المزيد"
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -95,13 +110,21 @@ export default function VideoSection({ videos }: VideoSectionProps) {
                       e.currentTarget.pause()
                     }}
                   />
-                  {/* Title overlay on hover */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-end justify-center">
-                    <div className="transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 p-3">
-                      <p className="text-white text-sm font-medium text-center bg-black bg-opacity-50 rounded px-2 py-1">
-                        {video.title}
-                      </p>
-                    </div>
+                  {/* Always visible overlay with title and button */}
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center p-4">
+                    <h3 className="text-white text-lg font-bold text-center mb-4 drop-shadow-lg">
+                      {video.title}
+                    </h3>
+                    {video.link && (
+                      <Link href={video.link}>
+                        <Button 
+                          size="sm" 
+                          className="bg-white text-black hover:bg-gray-100 font-medium px-6 py-2 rounded-full shadow-lg"
+                        >
+                          عرض المزيد
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

@@ -54,6 +54,7 @@ interface VideoItem {
   id: string
   url: string
   title: string
+  link?: string
 }
 
 // Sortable Carousel Item Component

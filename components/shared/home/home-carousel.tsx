@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -22,13 +22,27 @@ export default function HomeCarousel({ carousels }: HomeCarouselProps) {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isTransitioningRef = useRef(false)
+  
+  const autoSlideNext = useCallback(() => {
+    if (!carousels || carousels.length === 0 || isTransitioningRef.current) return
+    
+    isTransitioningRef.current = true
+    setIsTransitioning(true)
+    setCurrentSlide(prev => (prev + 1) % carousels.length)
+    
+    setTimeout(() => {
+      isTransitioningRef.current = false
+      setIsTransitioning(false)
+    }, 300)
+  }, [carousels])
   
   // Auto-slide every 5 seconds (only when not hovering and user hasn't interacted)
   useEffect(() => {
     if (isHovering || hasUserInteracted || !carousels || carousels.length === 0) return;
 
     intervalRef.current = setInterval(() => {
-      goToNext()
+      autoSlideNext()
     }, 5000)
 
     return () => {
@@ -37,41 +51,53 @@ export default function HomeCarousel({ carousels }: HomeCarouselProps) {
         intervalRef.current = null
       }
     }
-  }, [isHovering, hasUserInteracted])
+  }, [isHovering, hasUserInteracted, carousels, autoSlideNext])
 
   const goToPrevious = () => {
-    if (isTransitioning || !carousels || carousels.length === 0) return
+    if (isTransitioningRef.current || !carousels || carousels.length === 0) return
     
     setHasUserInteracted(true)
     pauseAutoSlide()
+    isTransitioningRef.current = true
     setIsTransitioning(true)
     setTimeout(() => {
       setCurrentSlide(prev => prev === 0 ? carousels.length - 1 : prev - 1)
-      setTimeout(() => setIsTransitioning(false), 300)
+      setTimeout(() => {
+        isTransitioningRef.current = false
+        setIsTransitioning(false)
+      }, 300)
     }, 300)
   }
 
   const goToNext = () => {
-    if (isTransitioning || !carousels || carousels.length === 0) return
+    if (isTransitioningRef.current || !carousels || carousels.length === 0) return
     
     setHasUserInteracted(true)
     pauseAutoSlide()
+    isTransitioningRef.current = true
     setIsTransitioning(true)
     setTimeout(() => {
       setCurrentSlide(prev => (prev + 1) % carousels.length)
-      setTimeout(() => setIsTransitioning(false), 300)
+      setTimeout(() => {
+        isTransitioningRef.current = false
+        setIsTransitioning(false)
+      }, 300)
     }, 300)
   }
 
   const goToSlide = (index: number) => {
-    if (isTransitioning || index === currentSlide || !carousels || carousels.length === 0) return
+    if (isTransitioningRef.current || index === currentSlide || !carousels || carousels.length === 0) return
     
     setHasUserInteracted(true)
     pauseAutoSlide()
+    isTransitioningRef.current = true
     setIsTransitioning(true)
     setTimeout(() => {
       setCurrentSlide(index)
-      setTimeout(() => setIsTransitioning(false), 300)
+      setTimeout(() => {
+        isTransitioningRef.current = false
+        setIsTransitioning(false)
+      }, 300)
     }, 300)
   }
 

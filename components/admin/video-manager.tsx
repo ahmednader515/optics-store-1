@@ -13,6 +13,7 @@ interface VideoItem {
   id: string
   url: string
   title: string
+  link?: string
 }
 
 interface VideoManagerProps {
@@ -89,6 +90,16 @@ export default function VideoManager({ videos, onVideosChange }: VideoManagerPro
                   value={video.title}
                   onChange={(e) => updateVideo(index, 'title', e.target.value)}
                   placeholder='عنوان الفيديو'
+                />
+              </div>
+              
+              <div className='space-y-2'>
+                <Label htmlFor={`videoLink${index}`}>رابط الصفحة (اختياري)</Label>
+                <Input
+                  id={`videoLink${index}`}
+                  value={video.link || ''}
+                  onChange={(e) => updateVideo(index, 'link', e.target.value)}
+                  placeholder='رابط الصفحة المراد فتحها عند الضغط على الزر'
                 />
               </div>
               

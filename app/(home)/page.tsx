@@ -207,7 +207,26 @@ export default async function HomePage() {
       </div>
       
       {/* Hero section loads immediately */}
-      <HomeCarousel carousels={setting?.carousels as any[] || []} />
+      <HomeCarousel carousels={setting?.carousels as any[] || [
+        {
+          title: 'النظارات الطبية',
+          buttonCaption: 'تسوق الآن',
+          image: '/images/banner3.jpg',
+          url: '/search?category=النظارات الطبية',
+        },
+        {
+          title: 'النظارات الشمسية',
+          buttonCaption: 'تسوق الآن',
+          image: '/images/banner1.jpg',
+          url: '/search?category=النظارات الشمسية',
+        },
+        {
+          title: 'العدسات اللاصقة',
+          buttonCaption: 'شاهد المزيد',
+          image: '/images/banner2.jpg',
+          url: '/search?category=العدسات اللاصقة',
+        }
+      ]} />
       
       <div className='p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 bg-gray-50 pt-0 md:pt-6'>
         {/* Categories Section - Show on desktop */}
