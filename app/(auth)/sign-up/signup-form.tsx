@@ -25,6 +25,7 @@ import PhoneInput from '@/components/shared/phone-input'
 const signUpDefaultValues = {
   name: '',
   phone: '',
+  email: '',
   password: '',
   confirmPassword: '',
 }
@@ -56,7 +57,7 @@ export default function SignUpForm() {
         
         if (res.error) {
           if (res.error.includes('already exists')) {
-            errorMessage = 'يوجد حساب بهذا الرقم بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.'
+            errorMessage = 'يوجد حساب بهذا الرقم أو البريد الإلكتروني بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.'
           } else if (res.error.includes('validation')) {
             errorMessage = 'يرجى التحقق من إدخالك والمحاولة مرة أخرى.'
           } else {
@@ -160,6 +161,25 @@ export default function SignUpForm() {
                     onChange={field.onChange}
                     onBlur={field.onBlur}
                     name={field.name}
+                    className="text-right font-cairo h-10 md:h-12 text-base md:text-lg px-3 md:px-4"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name='email'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel className="text-right block font-cairo text-gray-700 text-base md:text-lg mb-2 md:mb-3">البريد الإلكتروني *</FormLabel>
+                <FormControl>
+                  <Input 
+                    type='email'
+                    placeholder='أدخل البريد الإلكتروني' 
+                    {...field} 
                     className="text-right font-cairo h-10 md:h-12 text-base md:text-lg px-3 md:px-4"
                   />
                 </FormControl>

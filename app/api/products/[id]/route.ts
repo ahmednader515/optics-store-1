@@ -11,7 +11,7 @@ export async function DELETE(
     const session = await auth()
     if (!session?.user || session.user.role !== 'Admin') {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: 'سجل دخول أولا' },
         { status: 401 }
       )
     }

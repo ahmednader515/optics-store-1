@@ -23,6 +23,9 @@ import Link from 'next/link'
 import { FaceShapeDetector } from '@/components/face-shape-detector'
 import { UploadButton } from '@/lib/uploadthing'
 import { useToast } from '@/hooks/use-toast'
+import { getProductsByFaceShape } from '@/lib/actions/chat.actions'
+import { getRecommendedGlassesShape, faceShapeDescriptions } from '@/lib/face-shape-mapping'
+import ProductDisplay from './product-display'
 
 // Icon options for chat
 const iconOptions = [
@@ -53,6 +56,10 @@ interface ChatMessage {
     confidence: number
     recommendations: string[]
   }
+  products?: any[]
+  faceShape?: string
+  recommendedShape?: string
+  category?: string
 }
 
 interface ChatOption {
@@ -290,6 +297,8 @@ export default function GlassesChat({ chatContent }: GlassesChatProps) {
     confidence: number
     recommendations: string[]
   } | null>(null)
+  const [recommendedProducts, setRecommendedProducts] = useState<any[]>([])
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
@@ -485,12 +494,26 @@ export default function GlassesChat({ chatContent }: GlassesChatProps) {
           timestamp: new Date()
         }])
       }, 500)
+    } else if (option.id === 'view-all-products') {
+      const maxScore = Math.max(...Object.values(scores))
+      const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
+      const results = chatContent?.results || chatResults
+      const result = results[resultCategory]
+      
+      window.open(result?.url || '/search', '_blank')
+      
+      setMessages(prev => [...prev, {
+        id: `user-action-${Date.now()}`,
+        type: 'user',
+        content: option.text,
+        timestamp: new Date()
+      }])
     } else if (option.id === 'restart') {
       resetChat()
     }
   }
 
-  const handleFaceShapeResult = (result: any) => {
+  const handleFaceShapeResult = async (result: any) => {
     const recommendations = getGlassesRecommendations(result.faceShape)
     const faceShapeData = {
       faceShape: result.faceShape,
@@ -500,11 +523,15 @@ export default function GlassesChat({ chatContent }: GlassesChatProps) {
     
     setFaceShapeResult(faceShapeData)
     
+    // Get recommended glasses shape for the face shape
+    const recommendedShape = getRecommendedGlassesShape(result.faceShape)
+    const faceShapeDescription = faceShapeDescriptions[result.faceShape] || 'شكل وجهك'
+
     setTimeout(() => {
       setMessages(prev => [...prev, {
         id: `face-shape-result`,
         type: 'bot',
-        content: `تم تحليل وجهك بنجاح! الشكل المناسب لك هو: ${result.faceShape} (دقة: ${result.confidence}%)`,
+        content: `تم تحليل وجهك بنجاح! ${faceShapeDescription} (دقة: ${result.confidence}%)`,
         timestamp: new Date(),
         faceShapeData
       }])
@@ -514,23 +541,77 @@ export default function GlassesChat({ chatContent }: GlassesChatProps) {
       setMessages(prev => [...prev, {
         id: `face-shape-recommendations`,
         type: 'bot',
-        content: 'بناءً على تحليل وجهك، إليك معلومات عن هذا الشكل من النظارات:',
+        content: `بناءً على شكل وجهك، أنصحك بالنظارات ذات الشكل: ${recommendedShape}`,
         timestamp: new Date()
       }])
     }, 2000)
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: `face-shape-details`,
-        type: 'bot',
-        content: recommendations.join('\n• '),
-        timestamp: new Date()
-      }])
-    }, 3000)
+    // Fetch recommended products
+    setIsLoadingProducts(true)
+    try {
+      const maxScore = Math.max(...Object.values(scores))
+      const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
+      
+      const productResult = await getProductsByFaceShape({
+        faceShape: result.faceShape,
+        category: resultCategory,
+        limit: 6
+      })
 
-    setTimeout(() => {
-      showFinalResults()
-    }, 4000)
+      if (productResult.success && productResult.products.length > 0) {
+        setRecommendedProducts(productResult.products)
+        
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: 'recommended-products',
+            type: 'bot',
+            content: `إليك النظارات المناسبة لشكل وجهك واحتياجاتك:`,
+            timestamp: new Date(),
+            products: productResult.products,
+            faceShape: result.faceShape,
+            recommendedShape: productResult.recommendedShape,
+            category: resultCategory
+          }])
+        }, 3000)
+      } else {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: 'no-products-found',
+            type: 'bot',
+            content: `عذراً، لم نتمكن من العثور على منتجات مطابقة لشكل وجهك في هذه الفئة. يمكنك تصفح جميع المنتجات المتاحة.`,
+            timestamp: new Date(),
+            options: [
+              {
+                id: 'view-all-products',
+                text: 'عرض جميع المنتجات',
+                icon: <ArrowRight className="w-4 h-4" />,
+                score: {}
+              }
+            ]
+          }])
+        }, 3000)
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error)
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: 'error-loading-products',
+          type: 'bot',
+          content: `حدث خطأ في تحميل المنتجات. يمكنك تصفح جميع المنتجات المتاحة.`,
+          timestamp: new Date(),
+          options: [
+            {
+              id: 'view-all-products',
+              text: 'عرض جميع المنتجات',
+              icon: <ArrowRight className="w-4 h-4" />,
+              score: {}
+            }
+          ]
+        }])
+      }, 3000)
+    } finally {
+      setIsLoadingProducts(false)
+    }
   }
 
   const handleFaceShapeError = (error: string) => {
@@ -731,9 +812,9 @@ export default function GlassesChat({ chatContent }: GlassesChatProps) {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-4 left-2 right-2 sm:bottom-6 sm:left-6 sm:right-auto z-50 w-auto sm:w-[32rem] h-[32rem] sm:h-[36rem] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col">
+        <div className="fixed inset-0 sm:bottom-6 sm:left-6 sm:right-auto sm:top-auto sm:inset-auto z-50 w-full sm:w-[32rem] h-full sm:h-[36rem] bg-white sm:rounded-lg shadow-2xl border border-gray-200 flex flex-col">
           {/* Chat Header */}
-          <div className="bg-primary text-white p-4 rounded-t-lg flex items-center justify-between">
+          <div className="bg-primary text-white p-4 sm:rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
               <span className="font-semibold">مساعد اختيار النظارات</span>
@@ -850,6 +931,28 @@ export default function GlassesChat({ chatContent }: GlassesChatProps) {
                           </div>
                         </div>
                       )}
+
+                      {/* Product Display */}
+                      {message.products && (
+                        <div className="mt-4">
+                          <ProductDisplay
+                            products={message.products}
+                            faceShape={message.faceShape}
+                            recommendedShape={message.recommendedShape}
+                            category={message.category}
+                          />
+                        </div>
+                      )}
+
+                      {/* Loading Products */}
+                      {isLoadingProducts && message.id === 'recommended-products' && (
+                        <div className="mt-4 flex items-center justify-center py-8">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                            <p className="text-sm text-gray-600 font-cairo">جاري تحميل المنتجات المقترحة...</p>
+                          </div>
+                        </div>
+                      )}
                       
                       {message.options && (
                         <div className="mt-3 space-y-2">
@@ -882,7 +985,7 @@ export default function GlassesChat({ chatContent }: GlassesChatProps) {
           </div>
 
           {/* Chat Footer */}
-          <div className="border-t border-gray-200 p-3 bg-gray-50 rounded-b-lg">
+          <div className="border-t border-gray-200 p-3 bg-gray-50 sm:rounded-b-lg">
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <span>متصل الآن</span>

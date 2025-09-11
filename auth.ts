@@ -12,12 +12,14 @@ declare module 'next-auth' {
     user: {
       role: string
       phone: string
+      email?: string
       addresses?: ShippingAddress[]
     } & DefaultSession['user']
   }
   
   interface User {
     phone: string
+    email?: string
     role: string
     addresses?: ShippingAddress[]
   }
@@ -53,7 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          if (credentials == null || !credentials.phone || typeof credentials.phone !== 'string') {
+          if (credentials == null || !credentials.phone || !credentials.password) {
             console.log('Invalid credentials provided')
             return null
           }
@@ -77,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 id: user.id,
                 name: user.name,
                 phone: user.phone,
+                email: user.email,
                 role: user.role,
               }
             } else {
@@ -113,6 +116,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.name = user.name || (user.phone ? user.phone : 'User')
           token.role = (user as { role: string }).role || 'user'
           token.phone = (user as { phone: string }).phone
+          token.email = (user as { email?: string }).email
           console.log('JWT callback - token after update:', token)
           console.log('JWT callback - token.phone set to:', token.phone)
         }
@@ -123,10 +127,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (session?.user?.phone && trigger === 'update') {
           token.phone = session.user.phone
         }
+        if (session?.user?.email && trigger === 'update') {
+          token.email = session.user.email
+        }
         
         // Ensure phone is always in token if it exists
         if (!token.phone && user?.phone) {
           token.phone = user.phone
+        }
+        // Ensure email is always in token if it exists
+        if (!token.email && user?.email) {
+          token.email = user.email
         }
         
         // If we still don't have a phone number, try to get it from the database
@@ -137,7 +148,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             })
             if (dbUser) {
               token.phone = dbUser.phone
+              token.email = dbUser.email
               console.log('JWT callback - phone found from database:', dbUser.phone)
+              console.log('JWT callback - email found from database:', dbUser.email)
             }
           } catch (error) {
             console.error('Error fetching phone from database:', error)
@@ -172,11 +185,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } else {
           console.log('Session callback - no phone in token')
         }
+        if (token.email) {
+          session.user.email = token.email as string
+          console.log('Session callback - email set from token:', token.email)
+        }
         if (trigger === 'update' && user?.name) {
           session.user.name = user.name
         }
         if (trigger === 'update' && user?.phone) {
           session.user.phone = user.phone
+        }
+        if (trigger === 'update' && user?.email) {
+          session.user.email = user.email
         }
         console.log('Session callback - final session:', session)
         return session

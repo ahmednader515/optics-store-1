@@ -44,6 +44,7 @@ export default async function AdminUser(props: {
             <TableRow className="bg-gray-100 border-b-2 border-gray-300">
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>الاسم</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>رقم الهاتف</TableHead>
+              <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>البريد الإلكتروني</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>الدور</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>تاريخ التسجيل</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>الإجراءات</TableHead>
@@ -53,15 +54,13 @@ export default async function AdminUser(props: {
             {users?.data.map((user) => (
               <TableRow key={user.id} className="border-b border-gray-200">
                 <TableCell className='py-4 px-4'>
-                  <div>
-                    <div className='font-medium'>{user.name}</div>
-                    {user.phone && (
-                      <div className='text-sm text-gray-500'>{user.phone}</div>
-                    )}
-                  </div>
+                  <div className='font-medium'>{user.name}</div>
                 </TableCell>
                 <TableCell className='py-4 px-4'>
                   {user.phone || 'غير متوفر'}
+                </TableCell>
+                <TableCell className='py-4 px-4'>
+                  {user.email || 'غير متوفر'}
                 </TableCell>
                 <TableCell className='py-4 px-4'>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -98,6 +97,9 @@ export default async function AdminUser(props: {
                 <div className="font-medium text-lg text-gray-900">{user.name}</div>
                 {user.phone && (
                   <div className="text-sm text-gray-500">{user.phone}</div>
+                )}
+                {user.email && (
+                  <div className="text-sm text-gray-500">{user.email}</div>
                 )}
               </div>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${

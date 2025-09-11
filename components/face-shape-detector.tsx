@@ -490,49 +490,39 @@ function detectFaceShape(landmarks: any): string {
       (isDiamondCandidate && hasNarrowFeatures && lengthToWidthRatio >= 0.8 && lengthToWidthRatio <= 1.5) ||
       (foreheadWidth < cheekboneWidth && cheekboneWidth < jawWidth) ||
       (jawWidth > cheekboneWidth && cheekboneWidth > foreheadWidth)) {
-    const diamondOptions = ["Cat-Eye", "Round", "Oval", "Rimless"];
-    const selectedShape = diamondOptions[Math.floor(Math.random() * diamondOptions.length)];
-    console.log('Classified as: Diamond face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Diamond face');
+    return "Diamond";
   }
   
   // 2. HEART: Wide forehead, narrow jaw, pointed chin
   if (isWideForehead && isNarrowJaw && isPointedChin && 
       lengthToWidthRatio > 1.1 && foreheadToJawRatio > 1.12) {
-    const heartOptions = ["Round", "Oval", "Cat-Eye", "Semi-Rimless"];
-    const selectedShape = heartOptions[Math.floor(Math.random() * heartOptions.length)];
-    console.log('Classified as: Heart face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Heart face');
+    return "Heart";
   }
   
   // 3. ROUND: Short face, similar widths at all levels
   if (lengthToWidthRatio < 1.1 && 
       Math.abs(cheekboneWidth - foreheadWidth) < 35 && 
       Math.abs(cheekboneWidth - jawWidth) < 35) {
-    const roundOptions = ["Square", "Rectangle", "Browline", "Wayfarer"];
-    const selectedShape = roundOptions[Math.floor(Math.random() * roundOptions.length)];
-    console.log('Classified as: Round face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Round face');
+    return "Round";
   }
   
   // 4. SQUARE: Short to medium face, uniform width, strong jaw
   if (lengthToWidthRatio >= 0.9 && lengthToWidthRatio <= 1.25 && 
       Math.abs(cheekboneWidth - jawWidth) < 45 && 
       Math.abs(foreheadWidth - jawWidth) < 45) {
-    const squareOptions = ["Round", "Oval", "Cat-Eye", "Rimless"];
-    const selectedShape = squareOptions[Math.floor(Math.random() * squareOptions.length)];
-    console.log('Classified as: Square face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Square face');
+    return "Square";
   }
   
   // 5. RECTANGLE: Long face, relatively uniform width
   if (lengthToWidthRatio > 1.35 && lengthToWidthRatio <= 1.6 && 
       Math.abs(cheekboneWidth - jawWidth) < 55 && 
       Math.abs(foreheadWidth - jawWidth) < 55) {
-    const rectangleOptions = ["Aviator", "Round", "Oval", "Wayfarer"];
-    const selectedShape = rectangleOptions[Math.floor(Math.random() * rectangleOptions.length)];
-    console.log('Classified as: Rectangle face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Rectangle face');
+    return "Rectangle";
   }
   
   // 6. OVAL: Balanced proportions, slightly longer than wide, wider cheekbones
@@ -561,10 +551,8 @@ function detectFaceShape(landmarks: any): string {
       cheekboneWidth > jawWidth * 0.95 && 
       Math.abs(foreheadToJawRatio - 1.0) < 0.15 &&
       !hasAnyDiamondFeatures) { // Exclude ANY Diamond-like features
-    const ovalOptions = ["Oval", "Rectangle", "Wayfarer", "Browline"];
-    const selectedShape = ovalOptions[Math.floor(Math.random() * ovalOptions.length)];
-    console.log('Classified as: Oval face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Oval face');
+    return "Oval";
   }
 
   // Enhanced fallback classification with better accuracy
@@ -572,50 +560,34 @@ function detectFaceShape(landmarks: any): string {
   
   if (lengthToWidthRatio > 1.4) {
     if (Math.abs(cheekboneWidth - jawWidth) < 50) {
-      const longFaceOptions = ["Aviator", "Rectangle", "Wayfarer"];
-      const selectedShape = longFaceOptions[Math.floor(Math.random() * longFaceOptions.length)];
-      console.log('Classified as: Rectangle face - recommend', selectedShape, 'glasses');
-      return selectedShape;
+      console.log('Classified as: Rectangle face');
+      return "Rectangle";
     } else {
-      const ovalOptions = ["Wayfarer", "Oval", "Browline"];
-      const selectedShape = ovalOptions[Math.floor(Math.random() * ovalOptions.length)];
-      console.log('Classified as: Oval face - recommend', selectedShape, 'glasses');
-      return selectedShape;
+      console.log('Classified as: Oval face');
+      return "Oval";
     }
   } else if (lengthToWidthRatio < 1.0) {
-    const roundOptions = ["Square", "Rectangle", "Browline"];
-    const selectedShape = roundOptions[Math.floor(Math.random() * roundOptions.length)];
-    console.log('Classified as: Round face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Round face');
+    return "Round";
   } else if (isWideCheekbones && isNarrowJaw && isNarrowTemple) {
-    const diamondOptions = ["Cat-Eye", "Round", "Oval"];
-    const selectedShape = diamondOptions[Math.floor(Math.random() * diamondOptions.length)];
-    console.log('Classified as: Diamond face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Diamond face');
+    return "Diamond";
   } else if (isWideForehead && isNarrowJaw && isPointedChin) {
-    const heartOptions = ["Round", "Oval", "Semi-Rimless"];
-    const selectedShape = heartOptions[Math.floor(Math.random() * heartOptions.length)];
-    console.log('Classified as: Heart face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Heart face');
+    return "Heart";
   } else if (Math.abs(cheekboneWidth - jawWidth) < 40 && Math.abs(foreheadWidth - jawWidth) < 40) {
-    const squareOptions = ["Round", "Oval", "Rimless"];
-    const selectedShape = squareOptions[Math.floor(Math.random() * squareOptions.length)];
-    console.log('Classified as: Square face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Square face');
+    return "Square";
   } else if (isWideCheekbones || isNarrowJaw || isNarrowTemple || cheekboneToJawRatio > 1.05 ||
              isSimpleDiamond || isClassicDiamond || isReverseDiamond ||
              (jawWidth > cheekboneWidth && cheekboneWidth > foreheadWidth) ||
              (foreheadWidth < cheekboneWidth && cheekboneWidth < jawWidth)) {
     // If it has ANY Diamond characteristics OR width progression, classify as Diamond
-    const diamondOptions = ["Cat-Eye", "Round", "Oval"];
-    const selectedShape = diamondOptions[Math.floor(Math.random() * diamondOptions.length)];
-    console.log('Classified as: Diamond face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Diamond face');
+    return "Diamond";
   } else {
-    const defaultOptions = ["Oval", "Wayfarer", "Browline"];
-    const selectedShape = defaultOptions[Math.floor(Math.random() * defaultOptions.length)];
-    console.log('Classified as: Default face - recommend', selectedShape, 'glasses');
-    return selectedShape;
+    console.log('Classified as: Unknown face');
+    return "Unknown";
   }
 }
 

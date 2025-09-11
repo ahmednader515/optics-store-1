@@ -17,25 +17,35 @@ export async function registerUser(userSignUp: IUserSignUp) {
     const user = await UserSignUpSchema.parseAsync({
       name: userSignUp.name,
       phone: userSignUp.phone,
+      email: userSignUp.email,
       password: userSignUp.password,
       confirmPassword: userSignUp.confirmPassword,
     })
 
     // Always use database
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    // Check if user already exists by phone or email
+    const existingUserByPhone = user.phone ? await prisma.user.findUnique({
       where: { phone: user.phone }
-    })
+    }) : null
 
-    if (existingUser) {
+    const existingUserByEmail = user.email ? await prisma.user.findUnique({
+      where: { email: user.email }
+    }) : null
+
+    if (existingUserByPhone) {
       return { success: false, error: 'يوجد حساب بهذا الرقم بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.' }
+    }
+
+    if (existingUserByEmail) {
+      return { success: false, error: 'يوجد حساب بهذا البريد الإلكتروني بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.' }
     }
 
     await prisma.user.create({
       data: {
         name: user.name,
         phone: user.phone,
+        email: user.email,
         password: await bcrypt.hash(user.password, 5),
         role: 'User',
       }
@@ -48,7 +58,7 @@ export async function registerUser(userSignUp: IUserSignUp) {
         return { success: false, error: 'يرجى التحقق من المدخلات والتأكد من ملء جميع الحقول بشكل صحيح.' }
       }
       if (error.message.includes('unique constraint')) {
-        return { success: false, error: 'يوجد حساب بهذا الرقم بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.' }
+        return { success: false, error: 'يوجد حساب بهذا الرقم أو البريد الإلكتروني بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.' }
       }
       if (error.message.includes('database')) {
         return { success: false, error: 'خطأ في الاتصال بقاعدة البيانات. يرجى المحاولة مرة أخرى لاحقاً.' }

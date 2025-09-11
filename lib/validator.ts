@@ -197,12 +197,18 @@ export const UserSignInSchema = z.object({
   phone: Phone,
   password: Password,
 })
-export const UserSignUpSchema = UserSignInSchema.extend({
+export const UserSignUpSchema = z.object({
   name: UserName,
+  phone: Phone.optional(),
+  email: Email,
+  password: Password,
   confirmPassword: Password,
 }).refine((data) => data.password === data.confirmPassword, {
   message: "كلمات المرور غير متطابقة",
   path: ['confirmPassword'],
+}).refine((data) => data.phone || data.email, {
+  message: "يجب إدخال رقم الهاتف أو البريد الإلكتروني",
+  path: ['phone'],
 })
 export const UserNameSchema = z.object({
   name: UserName,

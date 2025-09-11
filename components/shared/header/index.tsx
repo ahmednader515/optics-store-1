@@ -47,7 +47,7 @@ export default async function Header() {
       <header className="bg-white text-gray-800 font-cairo sticky top-0 z-40 md:relative md:z-auto" dir="rtl">
         {/* Main Header - Clean Design */}
         <div className="bg-white border-b border-gray-200">
-          <div className="container mx-auto px-4 py-2 sm:py-3 md:py-4">
+          <div className="container mx-auto px-4 py-3 sm:py-4 md:py-5">
             {/* Header Row */}
             <div className="flex items-center justify-between">
               {/* Hamburger Menu */}
@@ -60,11 +60,11 @@ export default async function Header() {
                 <Link href="/">
                   <Image
                     src={site.logo}
-                    width={914}
-                    height={975}
+                    width={257}
+                    height={133}
                     alt={`${site.name} logo`}
-                    className="w-12 h-auto sm:w-16 sm:h-auto md:w-20 md:h-auto"
-                    style={{ aspectRatio: '914/975' }}
+                    className="h-8 w-auto sm:h-10 sm:w-auto md:h-12 md:w-auto"
+                    style={{ aspectRatio: '257/133' }}
                   />
                 </Link>
               </div>

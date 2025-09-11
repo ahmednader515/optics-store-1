@@ -14,7 +14,7 @@ export const ourFileRouter = {
       const session = await auth()
 
       // If you throw, the user will not be able to upload
-      if (!session) throw new UploadThingError('Unauthorized')
+      if (!session) throw new UploadThingError('سجل دخول أولا')
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: session?.user?.id }
@@ -33,7 +33,7 @@ export const ourFileRouter = {
       const session = await auth()
 
       // If you throw, the user will not be able to upload
-      if (!session) throw new UploadThingError('Unauthorized')
+      if (!session) throw new UploadThingError('سجل دخول أولا')
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: session?.user?.id }
