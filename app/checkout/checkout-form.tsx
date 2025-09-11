@@ -31,6 +31,8 @@ import Link from 'next/link'
 import useCartStore from '@/hooks/use-cart-store'
 import ProductPrice from '@/components/shared/product/product-price'
 import data from '@/lib/data'
+import { UploadButton } from '@/lib/uploadthing'
+import { Upload, X } from 'lucide-react'
 
 const shippingAddressDefaultValues = {
   street: '',
@@ -50,6 +52,7 @@ export default function CheckoutForm() {
 
   const {
     cart: {
+      items,
       itemsPrice,
       shippingPrice,
       taxPrice,
@@ -72,6 +75,12 @@ export default function CheckoutForm() {
     }
   }, [setPaymentMethod, defaultPaymentMethod])
 
+  // Check if any products require medical certificate
+  useEffect(() => {
+    const requiresCert = items.some(item => item.requiresMedicalCertificate)
+    setRequiresMedicalCertificate(requiresCert)
+  }, [items])
+
 
   const shippingAddressForm = useForm<ShippingAddress>({
     resolver: zodResolver(ShippingAddressSchema),
@@ -87,6 +96,8 @@ export default function CheckoutForm() {
   const [isAddressSelected, setIsAddressSelected] = useState<boolean>(false)
   const [isPaymentMethodSelected, setIsPaymentMethodSelected] =
     useState<boolean>(false)
+  const [medicalCertificateImage, setMedicalCertificateImage] = useState<string | null>(null)
+  const [requiresMedicalCertificate, setRequiresMedicalCertificate] = useState<boolean>(false)
 
   const handlePlaceOrder = async () => {
     await withLoading(
@@ -97,7 +108,10 @@ export default function CheckoutForm() {
         // Get the current cart state
         const currentCart = useCartStore.getState().cart
         
-        const res = await createOrder(currentCart)
+        const res = await createOrder({
+          ...currentCart,
+          medicalCertificateImage: medicalCertificateImage || undefined
+        })
         if (!res.success) {
           toast({
             description: res.message,
@@ -520,9 +534,71 @@ export default function CheckoutForm() {
           </div>
 
 
-              
-            
-          {isPaymentMethodSelected && isAddressSelected && (
+          {/* Medical Certificate Upload */}
+          {requiresMedicalCertificate ? (
+            <div className='border-y'>
+              <div className='flex text-primary text-base sm:text-lg font-bold my-2'>
+                <span className='w-6 sm:w-8'>3 </span>
+                <span>رفع كشف طبي</span>
+              </div>
+              <Card className='lg:mr-8 my-3 sm:my-4'>
+                <CardContent className='p-3 sm:p-4'>
+                  <div className='space-y-4'>
+                    <p className='text-sm text-gray-600'>
+                      بعض المنتجات في طلبك تتطلب كشف طبي. يرجى رفع صورة واضحة للكشف الطبي.
+                    </p>
+                    
+                    {!medicalCertificateImage ? (
+                      <div className='border-2 border-dashed border-gray-300 rounded-lg p-6 text-center'>
+                        <Upload className='h-8 w-8 mx-auto text-gray-400 mb-2' />
+                        <p className='text-sm text-gray-600 mb-4'>ارفع صورة الكشف الطبي</p>
+                        <UploadButton
+                          endpoint="imageUploader"
+                          onClientUploadComplete={(res) => {
+                            if (res && res[0]?.url) {
+                              setMedicalCertificateImage(res[0].url)
+                              toast({
+                                description: 'تم رفع الكشف الطبي بنجاح',
+                              })
+                            }
+                          }}
+                          onUploadError={(error: Error) => {
+                            toast({
+                              variant: 'destructive',
+                              description: `خطأ في رفع الصورة: ${error.message}`,
+                            })
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className='space-y-3'>
+                        <div className='flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                            <span className='text-sm text-green-800'>تم رفع الكشف الطبي بنجاح</span>
+                          </div>
+                          <button
+                            onClick={() => setMedicalCertificateImage(null)}
+                            className='text-red-500 hover:text-red-700 p-1'
+                          >
+                            <X className='h-4 w-4' />
+                          </button>
+                        </div>
+                        <div className='flex justify-center'>
+                          <img
+                            src={medicalCertificateImage}
+                            alt="Medical Certificate"
+                            className='max-w-full h-32 object-contain rounded border'
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+          {isPaymentMethodSelected && isAddressSelected && (!requiresMedicalCertificate || medicalCertificateImage) && (
             <div className='mt-4 sm:mt-6'>
               <div className='block lg:hidden'>
                 <CheckoutSummary />

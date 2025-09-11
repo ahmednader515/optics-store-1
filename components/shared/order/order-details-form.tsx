@@ -69,6 +69,7 @@ export default function OrderDetailsForm({
   console.log('OrderItems:', orderItems)
   console.log('OrderItemsList:', orderItemsList)
   console.log('ShippingAddress:', shippingAddress)
+  console.log('Medical Certificate Image:', order.medicalCertificateImage)
   
   if (orderItemsList.length === 0) {
     return (
@@ -124,6 +125,38 @@ export default function OrderDetailsForm({
             )}
           </CardContent>
         </Card>
+        
+        {/* Medical Certificate Image */}
+        <Card>
+          <CardContent className='p-4 gap-4'>
+            <h2 className='text-xl pb-4'>كشف طبي</h2>
+            <div className='space-y-3'>
+              {order.medicalCertificateImage ? (
+                <>
+                  <p className='text-sm text-gray-600'>
+                    تم رفع الكشف الطبي مع الطلب
+                  </p>
+                  <div className='flex justify-center'>
+                    <img
+                      src={order.medicalCertificateImage}
+                      alt="الكشف الطبي"
+                      className='max-w-full h-64 object-contain rounded border cursor-pointer hover:opacity-80'
+                      onClick={() => window.open(order.medicalCertificateImage, '_blank')}
+                    />
+                  </div>
+                  <p className='text-xs text-gray-500 text-center'>
+                    اضغط على الصورة لعرضها بحجم كامل
+                  </p>
+                </>
+              ) : (
+                <p className='text-sm text-gray-500 text-center'>
+                  لم يتم رفع كشف طبي مع هذا الطلب
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
         <Card>
           <CardContent className='p-4 gap-4'>
             <h2 className='text-xl pb-4'>تفاصيل الطلب</h2>

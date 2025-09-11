@@ -246,7 +246,7 @@ export default async function HomePage() {
       </div>
       
       {/* Chat Component */}
-      <GlassesChat />
+      <GlassesChat chatContent={setting?.chatContent as any} />
     </div>
   )
 }

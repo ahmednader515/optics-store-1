@@ -34,6 +34,28 @@ import { toSlug } from '@/lib/utils'
 import { useLoading } from '@/hooks/use-loading'
 import { LoadingSpinner } from '@/components/shared/loading-overlay'
 
+// Color mapping for Arabic color names to hex values
+const getColorValue = (colorName: string): string => {
+  const colorMap: { [key: string]: string } = {
+    'أسود': '#000000',
+    'أبيض': '#ffffff',
+    'بني': '#8B4513',
+    'أزرق': '#0000ff',
+    'أخضر': '#008000',
+    'أحمر': '#ff0000',
+    'وردي': '#ffc0cb',
+    'بنفسجي': '#800080',
+    'برتقالي': '#ffa500',
+    'أصفر': '#ffff00',
+    'رمادي': '#808080',
+    'فضي': '#c0c0c0',
+    'ذهبي': '#ffd700',
+    'شفاف': '#ffffff',
+    'متعدد الألوان': '#ff6b6b'
+  }
+  return colorMap[colorName] || '#cccccc'
+}
+
 const productDefaultValues: IProductInput = {
   name: '',
   slug: '',
@@ -48,10 +70,12 @@ const productDefaultValues: IProductInput = {
   avgRating: 0,
   numSales: 0,
   isPublished: false,
+  requiresMedicalCertificate: false,
   tags: [],
   sizes: [],
   colors: [],
   lensSizes: [],
+  glassesShape: '',
   ratingDistribution: [],
   reviews: [],
 }
@@ -247,58 +271,6 @@ const ProductForm = ({
             />
           </div>
 
-          {/* Virtual Try-On image upload (stored in tags as vto=URL) */}
-          <div className='flex flex-col gap-2'>
-            <FormItem className='w-full'>
-              <FormLabel className='text-gray-900 font-semibold'>صورة التجربة الافتراضية (اختياري)</FormLabel>
-              <Card>
-                <CardContent className='space-y-2 mt-2'>
-                  <div className='flex items-center justify-between'>
-                    <div className='text-sm text-gray-600'>ارفع صورة إطار شفافة PNG لتظهر على الوجه</div>
-                    {Array.isArray(form.watch('tags')) && form.watch('tags').some((t) => t.startsWith('vto=')) && (
-                      <button
-                        type='button'
-                        onClick={() => {
-                          const newTags = (form.getValues('tags') || []).filter((t) => !t.startsWith('vto='))
-                          form.setValue('tags', newTags)
-                        }}
-                        className='text-xs text-red-600 hover:underline'
-                      >
-                        إزالة
-                      </button>
-                    )}
-                  </div>
-                  <div className='flex items-center gap-3'>
-                    <FormControl>
-                      <UploadButton
-                        endpoint='imageUploader'
-                        onClientUploadComplete={(res: { url: string }[]) => {
-                          const url = res?.[0]?.url
-                          if (!url) return
-                          const otherTags = (form.getValues('tags') || []).filter((t) => !t.startsWith('vto='))
-                          form.setValue('tags', [...otherTags, `vto=${url}`])
-                        }}
-                        onUploadError={(error: Error) => {
-                          toast({ variant: 'destructive', description: `خطأ! ${error.message}` })
-                        }}
-                      />
-                    </FormControl>
-                    <div className='text-xs text-gray-500'>PNG بخلفية شفافة يفضل 1000px عرضًا</div>
-                  </div>
-                  {(() => {
-                    const vtoTag = (form.watch('tags') || []).find((t) => t.startsWith('vto='))
-                    const vtoUrl = vtoTag ? vtoTag.slice(4) : ''
-                    if (!vtoUrl || vtoUrl.trim() === '') return null
-                    return (
-                      <div className='mt-2'>
-                        <Image src={vtoUrl} alt='VTO' width={240} height={120} className='border rounded-md' />
-                      </div>
-                    )
-                  })()}
-                </CardContent>
-              </Card>
-            </FormItem>
-          </div>
           <div className='flex flex-col gap-5 md:flex-row'>
             <FormField
               control={form.control}
@@ -503,20 +475,162 @@ const ProductForm = ({
                     <FormLabel className='text-gray-900 font-semibold'>الألوان</FormLabel>
                     <FormControl>
                       <div className='space-y-2'>
-                        <Input
-                          placeholder='أضف لون (مثل: أحمر)'
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              const value = e.currentTarget.value.trim()
+                        <Select
+                          onValueChange={(value) => {
                               if (value && !field.value.includes(value)) {
                                 field.onChange([...field.value, value])
-                                e.currentTarget.value = ''
-                              }
                             }
                           }}
-                          className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
-                        />
+                        >
+                          <SelectTrigger className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'>
+                            <SelectValue placeholder='اختر لون لإضافته' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='أسود'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#000000' }}
+                                />
+                                <span>أسود</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='أبيض'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ 
+                                    backgroundColor: '#ffffff',
+                                    boxShadow: 'inset 0 0 0 1px #e5e7eb'
+                                  }}
+                                />
+                                <span>أبيض</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='بني'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#8B4513' }}
+                                />
+                                <span>بني</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='أزرق'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#0000ff' }}
+                                />
+                                <span>أزرق</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='أخضر'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#008000' }}
+                                />
+                                <span>أخضر</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='أحمر'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#ff0000' }}
+                                />
+                                <span>أحمر</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='وردي'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#ffc0cb' }}
+                                />
+                                <span>وردي</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='بنفسجي'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#800080' }}
+                                />
+                                <span>بنفسجي</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='برتقالي'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#ffa500' }}
+                                />
+                                <span>برتقالي</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='أصفر'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#ffff00' }}
+                                />
+                                <span>أصفر</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='رمادي'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#808080' }}
+                                />
+                                <span>رمادي</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='فضي'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#c0c0c0' }}
+                                />
+                                <span>فضي</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='ذهبي'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ backgroundColor: '#ffd700' }}
+                                />
+                                <span>ذهبي</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='شفاف'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ 
+                                    backgroundColor: '#ffffff',
+                                    boxShadow: 'inset 0 0 0 1px #e5e7eb'
+                                  }}
+                                />
+                                <span>شفاف</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='متعدد الألوان'>
+                              <div className='flex items-center gap-2'>
+                                <div 
+                                  className='w-4 h-4 rounded-full border border-gray-300'
+                                  style={{ 
+                                    background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57)'
+                                  }}
+                                />
+                                <span>متعدد الألوان</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                         <div className='flex flex-wrap gap-2'>
                           {field.value.map((color, index) => (
                             <div
@@ -524,8 +638,11 @@ const ProductForm = ({
                               className='flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm'
                             >
                               <div
-                                className='w-4 h-4 rounded-full border'
-                                style={{ backgroundColor: color.toLowerCase() }}
+                                className='w-4 h-4 rounded-full border border-gray-300'
+                                style={{ 
+                                  backgroundColor: getColorValue(color),
+                                  boxShadow: getColorValue(color) === '#ffffff' ? 'inset 0 0 0 1px #e5e7eb' : 'none'
+                                }}
                               />
                               <span>{color}</span>
                               <button
@@ -548,121 +665,91 @@ const ProductForm = ({
                 )}
               />
 
-              {/* Sizes */}
-              <FormField
-                control={form.control}
-                name='sizes'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className='text-gray-900 font-semibold'>الأحجام</FormLabel>
-                    <FormControl>
-                      <div className='space-y-2'>
-                        <Input
-                          placeholder='أضف حجم (مثل: S)'
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              const value = e.currentTarget.value.trim()
-                              if (value && !field.value.includes(value)) {
-                                field.onChange([...field.value, value])
-                                e.currentTarget.value = ''
-                              }
-                            }
-                          }}
-                          className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
-                        />
-                        <div className='flex flex-wrap gap-2'>
-                          {field.value.map((size, index) => (
-                            <div
-                              key={index}
-                              className='flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm'
-                            >
-                              <span>{size}</span>
-                              <button
-                                type='button'
-                                onClick={() => {
-                                  const newSizes = field.value.filter((_, i) => i !== index)
-                                  field.onChange(newSizes)
-                                }}
-                                className='text-red-500 hover:text-red-700'
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              {/* Lens Sizes */}
-              <FormField
-                control={form.control}
-                name='lensSizes'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className='text-gray-900 font-semibold'>أحجام العدسات</FormLabel>
-                    <FormControl>
-                      <div className='space-y-2'>
-                        <Input
-                          placeholder='أضف حجم عدسة (مثل: 52mm)'
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              const value = e.currentTarget.value.trim()
-                              if (value && !field.value.includes(value)) {
-                                field.onChange([...field.value, value])
-                                e.currentTarget.value = ''
-                              }
-                            }
-                          }}
-                          className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
-                        />
-                        <div className='flex flex-wrap gap-2'>
-                          {field.value.map((lensSize, index) => (
-                            <div
-                              key={index}
-                              className='flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm'
-                            >
-                              <span>{lensSize}</span>
-                              <button
-                                type='button'
-                                onClick={() => {
-                                  const newLensSizes = field.value.filter((_, i) => i !== index)
-                                  field.onChange(newLensSizes)
-                                }}
-                                className='text-red-500 hover:text-red-700'
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
           </div>
 
+          {/* Glasses Shape Field */}
           <div>
+              <FormField
+                control={form.control}
+              name='glassesShape'
+                render={({ field }) => (
+                <FormItem className='w-full'>
+                  <FormLabel className='text-gray-900 font-semibold'>شكل النظارات</FormLabel>
+                    <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'>
+                        <SelectValue placeholder="اختر شكل النظارات (اختياري)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Oval">بيضاوي</SelectItem>
+                        <SelectItem value="Round">دائري</SelectItem>
+                        <SelectItem value="Square">مربع</SelectItem>
+                        <SelectItem value="Rectangle">مستطيل</SelectItem>
+                        <SelectItem value="Heart">قلبي</SelectItem>
+                        <SelectItem value="Diamond">ماسي</SelectItem>
+                        <SelectItem value="Cat-Eye">عين القطة</SelectItem>
+                        <SelectItem value="Aviator">طيار</SelectItem>
+                        <SelectItem value="Wayfarer">وايفارير</SelectItem>
+                        <SelectItem value="Browline">برولاين</SelectItem>
+                        <SelectItem value="Rimless">بدون إطار</SelectItem>
+                        <SelectItem value="Semi-Rimless">نصف إطار</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    </FormControl>
+                  <p className="text-sm text-gray-600">
+                    اختر شكل النظارات لمساعدة العملاء في العثور على النظارات المناسبة لشكل وجههم
+                  </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+          </div>
+
+          <div className='space-y-4'>
+              <FormField
+                control={form.control}
+              name='requiresMedicalCertificate'
+                render={({ field }) => (
+                <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+                    <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className='space-y-1 leading-none'>
+                    <FormLabel className='text-gray-900 font-semibold'>
+                      يتطلب كشف طبي
+                    </FormLabel>
+                    <p className='text-sm text-gray-500'>
+                      تحقق من هذا المربع إذا كان المنتج يتطلب كشف طبي
+                    </p>
+                      </div>
+                  </FormItem>
+                )}
+              />
+
             <FormField
               control={form.control}
               name='isPublished'
               render={({ field }) => (
-                <FormItem className='space-x-2 items-center'>
+                <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className='text-gray-900 font-semibold'>منشور؟</FormLabel>
+                  <div className='space-y-1 leading-none'>
+                    <FormLabel className='text-gray-900 font-semibold'>
+                      منشور؟
+                    </FormLabel>
+                    <p className='text-sm text-gray-500'>
+                      تحقق من هذا المربع لنشر المنتج للعملاء
+                    </p>
+                  </div>
                 </FormItem>
               )}
             />

@@ -8,7 +8,6 @@ import AddToBrowsingHistory from '@/components/shared/product/add-to-browsing-hi
 import Rating from '@/components/shared/product/rating'
 import ReviewList from './review-list'
 import { Separator } from '@/components/ui/separator'
-import TryOnDialog from '@/components/shared/product/try-on-dialog'
 
 interface ProductPageProps {
   params: Promise<{

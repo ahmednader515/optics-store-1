@@ -102,6 +102,8 @@ export async function createProduct(data: IProductInput) {
         ratingDistribution: productData.ratingDistribution || null,
         numSales: productData.numSales,
         isPublished: productData.isPublished,
+        requiresMedicalCertificate: productData.requiresMedicalCertificate,
+        glassesShape: productData.glassesShape,
       }
     })
     revalidatePath('/admin/products')
@@ -143,6 +145,8 @@ export async function updateProduct(data: z.infer<typeof ProductUpdateSchema>) {
         ratingDistribution: productData.ratingDistribution || null,
         numSales: productData.numSales,
         isPublished: productData.isPublished,
+        requiresMedicalCertificate: productData.requiresMedicalCertificate,
+        glassesShape: productData.glassesShape,
       }
     })
     revalidatePath('/admin/products')

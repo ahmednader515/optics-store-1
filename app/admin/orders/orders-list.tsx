@@ -20,6 +20,7 @@ type Order = {
   totalPrice: number
   isPaid: boolean
   isDelivered: boolean
+  medicalCertificateImage?: string | null
   user: {
     name: string
     phone: string
@@ -83,6 +84,7 @@ export default function OrdersList({ orders, totalPages, currentPage }: OrdersLi
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>التاريخ</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>المشتري</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>المجموع</TableHead>
+              <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>كشف طبي</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>مدفوع</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>مُسلم</TableHead>
               <TableHead className='text-right bg-gray-100 text-gray-800 font-semibold py-4 px-4'>الإجراءات</TableHead>
@@ -102,6 +104,21 @@ export default function OrdersList({ orders, totalPages, currentPage }: OrdersLi
                 </TableCell>
                 <TableCell className='py-4 px-4'>
                   <ProductPrice price={order.totalPrice} />
+                </TableCell>
+                <TableCell className='py-4 px-4'>
+                  {order.medicalCertificateImage ? (
+                    <div className='flex items-center gap-2'>
+                      <img
+                        src={order.medicalCertificateImage}
+                        alt="Medical Certificate"
+                        className='w-12 h-12 object-cover rounded border cursor-pointer hover:opacity-80'
+                        onClick={() => window.open(order.medicalCertificateImage, '_blank')}
+                      />
+                      <span className='text-xs text-green-600 font-medium'>مرفق</span>
+                    </div>
+                  ) : (
+                    <span className='text-xs text-gray-500'>غير مرفق</span>
+                  )}
                 </TableCell>
                 <TableCell className='py-4 px-4'>
                   <span className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
@@ -179,6 +196,24 @@ export default function OrdersList({ orders, totalPages, currentPage }: OrdersLi
               <div className="text-lg font-semibold text-green-600">
                 <ProductPrice price={order.totalPrice} />
               </div>
+            </div>
+
+            {/* Medical Certificate */}
+            <div className="border-t border-gray-100 pt-3">
+              <div className="text-sm text-gray-600 mb-2">كشف طبي:</div>
+              {order.medicalCertificateImage ? (
+                <div className='flex items-center gap-2'>
+                  <img
+                    src={order.medicalCertificateImage}
+                    alt="Medical Certificate"
+                    className='w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80'
+                    onClick={() => window.open(order.medicalCertificateImage, '_blank')}
+                  />
+                  <span className='text-xs text-green-600 font-medium'>مرفق</span>
+                </div>
+              ) : (
+                <span className='text-xs text-gray-500'>غير مرفق</span>
+              )}
             </div>
 
             {/* Actions */}

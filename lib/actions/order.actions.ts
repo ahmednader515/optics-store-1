@@ -101,7 +101,9 @@ export const createOrderFromCart = async (
     shippingPrice: cart.shippingPrice,
     taxPrice: cart.taxPrice,
     totalPrice: cart.totalPrice,
-    expectedDeliveryDate: cart.expectedDeliveryDate,
+    expectedDeliveryDate: cart.expectedDeliveryDate ? new Date(cart.expectedDeliveryDate) : new Date(),
+    medicalCertificateImage: cart.medicalCertificateImage,
+    prescriptionImage: cart.prescriptionImage,
   })
   
       return await prisma.order.create({
@@ -118,6 +120,7 @@ export const createOrderFromCart = async (
       paidAt: orderData.paidAt,
       isDelivered: orderData.isDelivered,
       deliveredAt: orderData.deliveredAt,
+      medicalCertificateImage: orderData.medicalCertificateImage,
       orderItems: {
         create: orderData.items.map(item => ({
           productId: item.product,

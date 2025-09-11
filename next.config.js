@@ -73,6 +73,23 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      },
     ]
   },
   
@@ -82,6 +99,20 @@ const nextConfig = {
       ...config.resolve.alias,
       'app/[locale]': false,
     }
+    
+    // Fix face-api.js browser compatibility issues
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      crypto: false,
+      stream: false,
+      util: false,
+      buffer: false,
+      process: false,
+      encoding: false,
+    }
+    
     // Include prisma and @prisma/client in server bundle for engine resolution
     if (isServer) {
       config.externals = config.externals || []

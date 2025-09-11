@@ -1284,6 +1284,121 @@ For questions about shipping, please contact our customer service team.`,
           },
         ],
       },
+      chatContent: {
+        welcomeMessage: 'مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!',
+        questions: [
+          {
+            id: 'usage',
+            question: 'ما هو الاستخدام الأساسي الذي تبحث عنه؟',
+            options: [
+              {
+                id: 'computer',
+                text: 'العمل على الكمبيوتر',
+                icon: 'Monitor',
+                score: { computer: 3, reading: 2, medical: 1, sunglasses: 0, contact: 1, care: 0 }
+              },
+              {
+                id: 'reading',
+                text: 'القراءة والدراسة',
+                icon: 'BookOpen',
+                score: { reading: 3, medical: 2, computer: 1, sunglasses: 0, contact: 1, care: 0 }
+              },
+              {
+                id: 'outdoor',
+                text: 'الأنشطة الخارجية',
+                icon: 'Sun',
+                score: { sunglasses: 3, contact: 2, medical: 1, computer: 0, reading: 0, care: 1 }
+              },
+              {
+                id: 'vision',
+                text: 'تحسين الرؤية العامة',
+                icon: 'Eye',
+                score: { medical: 3, contact: 2, reading: 1, computer: 1, sunglasses: 0, care: 1 }
+              }
+            ]
+          },
+          {
+            id: 'lifestyle',
+            question: 'كيف تصف نمط حياتك؟',
+            options: [
+              {
+                id: 'active',
+                text: 'نشط ورياضي',
+                icon: 'Zap',
+                score: { sunglasses: 2, contact: 3, medical: 1, computer: 0, reading: 0, care: 1 }
+              },
+              {
+                id: 'professional',
+                text: 'مهني وعملي',
+                icon: 'Monitor',
+                score: { computer: 3, medical: 2, reading: 1, sunglasses: 0, contact: 1, care: 0 }
+              },
+              {
+                id: 'casual',
+                text: 'عادي ومريح',
+                icon: 'Heart',
+                score: { reading: 2, medical: 2, sunglasses: 1, computer: 1, contact: 1, care: 1 }
+              },
+              {
+                id: 'outdoor',
+                text: 'خارجي ومغامر',
+                icon: 'Sun',
+                score: { sunglasses: 3, contact: 2, medical: 1, computer: 0, reading: 0, care: 1 }
+              }
+            ]
+          }
+        ],
+        results: {
+          computer: {
+            category: 'نظارات الكمبيوتر',
+            title: 'النظارات المناسبة للكمبيوتر',
+            description: 'نظارات مخصصة للعمل على الكمبيوتر مع حماية من الضوء الأزرق وعدسة مريحة للعين.',
+            icon: 'Monitor',
+            color: 'bg-blue-500',
+            url: '/search?category=نظارات الكمبيوتر'
+          },
+          reading: {
+            category: 'نظارات القراءة',
+            title: 'النظارات المناسبة للقراءة',
+            description: 'نظارات مريحة للقراءة والدراسة مع عدسة واضحة ومريحة للعين.',
+            icon: 'BookOpen',
+            color: 'bg-green-500',
+            url: '/search?category=نظارات القراءة'
+          },
+          sunglasses: {
+            category: 'النظارات الشمسية',
+            title: 'النظارات الشمسية المناسبة لك',
+            description: 'نظارات شمسية عالية الجودة مع حماية من الأشعة فوق البنفسجية وأناقة عالية.',
+            icon: 'Sun',
+            color: 'bg-yellow-500',
+            url: '/search?category=النظارات الشمسية'
+          },
+          medical: {
+            category: 'النظارات الطبية',
+            title: 'النظارات الطبية المناسبة لك',
+            description: 'نظارات طبية عالية الجودة مع عدسة مخصصة لتحسين الرؤية، مصنوعة من مواد متينة ومريحة.',
+            icon: 'Eye',
+            color: 'bg-purple-500',
+            url: '/search?category=النظارات الطبية'
+          },
+          contact: {
+            category: 'العدسة اللاصقة',
+            title: 'العدسة اللاصقة المثالية لك',
+            description: 'عدسة لاصقة مريحة وآمنة مع تقنيات متقدمة للرطوبة والوضوح، مثالية للنشاط والحركة.',
+            icon: 'Heart',
+            color: 'bg-pink-500',
+            url: '/search?category=العدسة اللاصقة'
+          },
+          care: {
+            category: 'مستلزمات العناية',
+            title: 'منتجات العناية بالعين المناسبة لك',
+            description: 'منتجات عالية الجودة للعناية بالعين والنظارات، لضمان النظافة والراحة المثلى.',
+            icon: 'Heart',
+            color: 'bg-indigo-500',
+            url: '/search?category=مستلزمات العناية'
+          }
+        }
+      },
     },
   ],
 }

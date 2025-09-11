@@ -34,6 +34,7 @@ export async function getSetting(): Promise<ISettingInput> {
           defaultPaymentMethod: data.settings[0].defaultPaymentMethod,
           availableDeliveryDates: data.settings[0].availableDeliveryDates as any,
           defaultDeliveryDate: data.settings[0].defaultDeliveryDate,
+          chatContent: data.settings[0].chatContent as any || {},
         },
       })
       // Note: revalidateTag removed from here as it cannot be called during render
@@ -66,6 +67,7 @@ export async function updateSetting(newSetting: ISettingInput) {
           defaultPaymentMethod: newSetting.defaultPaymentMethod,
           availableDeliveryDates: newSetting.availableDeliveryDates as any,
           defaultDeliveryDate: newSetting.defaultDeliveryDate,
+          chatContent: newSetting.chatContent as any || {},
         },
       })
     } else {
@@ -84,6 +86,7 @@ export async function updateSetting(newSetting: ISettingInput) {
           defaultPaymentMethod: newSetting.defaultPaymentMethod,
           availableDeliveryDates: newSetting.availableDeliveryDates as any,
           defaultDeliveryDate: newSetting.defaultDeliveryDate,
+          chatContent: newSetting.chatContent as any || {},
         },
       })
     }

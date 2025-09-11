@@ -22,10 +22,10 @@ export default function CheckoutLayout({
                 alt='logo'
                 width={914}
                 height={975}
-                className="h-10 w-auto"
+                className="h-6 w-auto"
                 style={{
                   maxWidth: '100%',
-                  height: 'auto',
+                  height: '100px',
                   aspectRatio: '914/975',
                 }}
               />

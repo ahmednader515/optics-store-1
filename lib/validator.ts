@@ -35,6 +35,7 @@ export const ProductInputSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
   description: z.string().min(1, 'Description is required'),
   isPublished: z.boolean(),
+  requiresMedicalCertificate: z.boolean().default(false),
   price: Price('Price'),
   listPrice: Price('List price'),
   countInStock: z.coerce
@@ -45,6 +46,7 @@ export const ProductInputSchema = z.object({
   sizes: z.array(z.string()).default([]),
   colors: z.array(z.string()).default([]),
   lensSizes: z.array(z.string()).default([]),
+  glassesShape: z.string().optional(),
   avgRating: z.coerce
     .number()
     .min(0, 'Average rating must be at least 0')
@@ -87,6 +89,7 @@ export const OrderItemSchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
   lensSize: z.string().optional(),
+  requiresMedicalCertificate: z.boolean().default(false),
 })
 export const ShippingAddressSchema = z.object({
   street: z.string().min(1, 'العنوان (الشارع، الشقة، الجناح، الوحدة، إلخ) مطلوب'),
@@ -134,6 +137,8 @@ export const OrderInputSchema = z.object({
   deliveredAt: z.date().optional(),
   isPaid: z.boolean().default(false),
   paidAt: z.date().optional(),
+  medicalCertificateImage: z.string().optional(),
+  prescriptionImage: z.string().optional(),
 })
 // Cart
 
@@ -149,6 +154,8 @@ export const CartSchema = z.object({
   shippingAddress: z.optional(ShippingAddressSchema),
   deliveryDateIndex: z.optional(z.number()),
   expectedDeliveryDate: z.optional(z.date()),
+  medicalCertificateImage: z.optional(z.string()),
+  prescriptionImage: z.optional(z.string()),
 })
 
 // USER
@@ -317,5 +324,30 @@ export const SettingInputSchema = z.object({
       discountRate: z.coerce.number().min(0, 'Discount rate must be at least 0').max(100, 'Discount rate cannot exceed 100'),
       applicableCategories: z.array(z.string()).default([]),
     })).default([]),
+  }),
+  chatContent: z.object({
+    welcomeMessage: z.string().default('مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!'),
+    questions: z.array(z.object({
+      id: z.string(),
+      question: z.string(),
+      options: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        icon: z.string(),
+        score: z.record(z.number())
+      }))
+    })).default([]),
+    results: z.record(z.object({
+      category: z.string(),
+      title: z.string(),
+      description: z.string(),
+      icon: z.string(),
+      color: z.string(),
+      url: z.string()
+    })).default({})
+  }).default({
+    welcomeMessage: 'مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!',
+    questions: [],
+    results: {}
   }),
 })

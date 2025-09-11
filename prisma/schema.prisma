@@ -44,29 +44,31 @@ model UserAddress {
 }
 
 model Product {
-  id                 String      @id @default(cuid())
-  name               String
-  slug               String      @unique
-  category           String
-  images             String[]
-  brand              String
-  description        String
-  price              Decimal     @db.Decimal(10, 2)
-  listPrice          Decimal     @db.Decimal(10, 2)
-  countInStock       Int
-  tags               String[]    @default([])
-  colors             String[]    @default(["White", "Red", "Black"])
-  sizes              String[]    @default(["S", "M", "L"])
-  lensSizes          String[]    @default([])
-  avgRating          Float       @default(0)
-  numReviews         Int         @default(0)
-  ratingDistribution Json?
-  numSales           Int         @default(0)
-  isPublished        Boolean     @default(false)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  orderItems         OrderItem[]
-  reviews            Review[]
+  id                        String      @id @default(cuid())
+  name                      String
+  slug                      String      @unique
+  category                  String
+  images                    String[]
+  brand                     String
+  description               String
+  price                     Decimal     @db.Decimal(10, 2)
+  listPrice                 Decimal     @db.Decimal(10, 2)
+  countInStock              Int
+  tags                      String[]    @default([])
+  colors                    String[]    @default(["White", "Red", "Black"])
+  sizes                     String[]    @default(["S", "M", "L"])
+  lensSizes                 String[]    @default([])
+  glassesShape              String?
+  requiresMedicalCertificate Boolean    @default(false)
+  avgRating                 Float       @default(0)
+  numReviews                Int         @default(0)
+  ratingDistribution        Json?
+  numSales                  Int         @default(0)
+  isPublished               Boolean     @default(false)
+  createdAt                 DateTime    @default(now())
+  updatedAt                 DateTime    @updatedAt
+  orderItems                OrderItem[]
+  reviews                   Review[]
 
   @@map("products")
 }
@@ -102,24 +104,25 @@ model Review {
 }
 
 model Order {
-  id                   String                @id @default(cuid())
-  userId               String
-  expectedDeliveryDate DateTime
-  paymentMethod        String
-  paymentResult        Json?
-  itemsPrice           Decimal               @db.Decimal(10, 2)
-  shippingPrice        Decimal               @db.Decimal(10, 2)
-  taxPrice             Decimal               @db.Decimal(10, 2)
-  totalPrice           Decimal               @db.Decimal(10, 2)
-  isPaid               Boolean               @default(false)
-  paidAt               DateTime?
-  isDelivered          Boolean               @default(false)
-  deliveredAt          DateTime?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  orderItems           OrderItem[]
-  shippingAddress      OrderShippingAddress?
-  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                     String                @id @default(cuid())
+  userId                 String
+  expectedDeliveryDate   DateTime
+  paymentMethod          String
+  paymentResult          Json?
+  itemsPrice             Decimal               @db.Decimal(10, 2)
+  shippingPrice          Decimal               @db.Decimal(10, 2)
+  taxPrice               Decimal               @db.Decimal(10, 2)
+  totalPrice             Decimal               @db.Decimal(10, 2)
+  medicalCertificateImage String?
+  isPaid                 Boolean               @default(false)
+  paidAt                 DateTime?
+  isDelivered            Boolean               @default(false)
+  deliveredAt            DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  orderItems             OrderItem[]
+  shippingAddress        OrderShippingAddress?
+  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("orders")
 }
@@ -177,6 +180,7 @@ model Setting {
   defaultPaymentMethod    String
   availableDeliveryDates  Json
   defaultDeliveryDate     String
+  chatContent             Json?    @default("{}")
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 

@@ -6,8 +6,9 @@ import Search from "./search";
 import Menu from "./menu";
 import Sidebar from "./sidebar";
 import data from "@/lib/data";
-import { ShoppingCart, User, Package, Home, Shield, Glasses } from "lucide-react";
+import { ShoppingCart, User, Package, Home, Shield } from "lucide-react";
 import MobileCartCount from './mobile-cart-count'
+import MobileChatButton from './mobile-chat-button'
 
 // Arabic translations for categories
 const categoryTranslations: { [key: string]: string } = {
@@ -118,7 +119,7 @@ export default async function Header() {
       {/* Mobile Bottom Navigation - Fixed at bottom on mobile only */}
       <div className="fixed bottom-4 left-4 right-4 z-50 md:hidden" dir="rtl">
         <div className="bg-white border border-gray-200 rounded-full shadow-lg">
-          <div className="flex items-center justify-center gap-4 sm:gap-6 py-4 px-6">
+          <div className="flex items-center justify-center gap-2 sm:gap-4 py-2 px-4">
           {/* Homepage Button */}
           <Link href="/" className="flex flex-col items-center gap-1">
             <Home className="w-6 h-6 text-gray-600" />
@@ -134,12 +135,8 @@ export default async function Header() {
             <span className="text-xs text-gray-600">السلة</span>
           </Link>
           
-          {/* Glasses Button - Center with black background, larger size, and extending out */}
-          <Link href="/try-on" className="flex flex-col items-center">
-            <div className="bg-black rounded-full p-4 -mt-6 shadow-lg border-4 border-white">
-              <Glasses className="w-10 h-10 text-white" />
-            </div>
-          </Link>
+          {/* Chat Button - Mobile Only */}
+          <MobileChatButton />
           
           {/* User Actions */}
           {session ? (

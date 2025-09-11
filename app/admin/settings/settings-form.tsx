@@ -9,12 +9,13 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
-import { Plus, Trash2, Save, Image as ImageIcon, Upload, Truck, Calculator, DollarSign, GripVertical } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Upload, Truck, Calculator, DollarSign, GripVertical, Settings, MessageCircle, Video, FolderOpen, Package, Percent } from 'lucide-react'
 import data from '@/lib/data'
 import { updateSetting } from '@/lib/actions/setting.actions'
 import { UploadButton } from '@/lib/uploadthing'
 import CategoryManager from '@/components/admin/category-manager'
 import VideoManager from '@/components/admin/video-manager'
+import ChatContentManager from '@/components/admin/chat-content-manager'
 import {
   DndContext,
   closestCenter,
@@ -233,6 +234,12 @@ export default function SettingsForm({ setting }: { setting: any }) {
     ] as SeasonalDiscount[],
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [chatContent, setChatContent] = useState<any>({
+    welcomeMessage: 'مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!',
+    questions: [],
+    results: {}
+  })
+  const [activeTab, setActiveTab] = useState('carousel')
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -247,6 +254,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
     if (settings) {
       setCarouselItems(settings.carousels || [])
       setVideos(settings.videos || [])
+      setChatContent(settings.chatContent || {})
       if (settings.deliverySettings) {
         const delivery = settings.deliverySettings
         if ('deliveryTimeHours' in delivery) {
@@ -391,333 +399,397 @@ export default function SettingsForm({ setting }: { setting: any }) {
     }
   }
 
+  const tabs = [
+    { id: 'carousel', label: 'الكاروسيل', icon: <ImageIcon className="w-4 h-4" /> },
+    { id: 'categories', label: 'الفئات', icon: <FolderOpen className="w-4 h-4" /> },
+    { id: 'videos', label: 'الفيديوهات', icon: <Video className="w-4 h-4" /> },
+    { id: 'delivery', label: 'التوصيل', icon: <Truck className="w-4 h-4" /> },
+    { id: 'tax', label: 'الضرائب', icon: <Calculator className="w-4 h-4" /> },
+    { id: 'pricing', label: 'التسعير', icon: <DollarSign className="w-4 h-4" /> },
+    { id: 'chat', label: 'الدردشة', icon: <MessageCircle className="w-4 h-4" /> },
+  ]
+
   return (
     <div className='space-y-6'>
-      {/* Carousel Settings */}
+      {/* Tab Navigation */}
       <Card>
-        <CardHeader>
-          <div className='flex items-center justify-between'>
-            <CardTitle className='text-xl flex items-center gap-2'>
-              <ImageIcon className='h-5 w-5' />
-              إعدادات الكاروسيل
-            </CardTitle>
-            <Button onClick={addCarouselItem} size='sm'>
-              <Plus className='h-4 w-4 ml-2' />
-              إضافة عنصر
-            </Button>
-          </div>
-          <p className='text-sm text-muted-foreground mt-2'>
-            اسحب العناصر باستخدام أيقونة السحب (⋮⋮) لإعادة ترتيبها
-          </p>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={carouselItems.map((item, index) => item.title + index)}
-              strategy={verticalListSortingStrategy}
-            >
-              {carouselItems.map((item, index) => (
-                <SortableCarouselItem
-                  key={item.title + index}
-                  item={item}
-                  index={index}
-                  onUpdate={handleCarouselChange}
-                  onRemove={removeCarouselItem}
-                  isLast={index === carouselItems.length - 1}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
-        </CardContent>
-      </Card>
-
-      {/* Category Management */}
-      <CategoryManager />
-
-      {/* Video Management */}
-      <VideoManager videos={videos} onVideosChange={setVideos} />
-
-      {/* Delivery Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-xl flex items-center gap-2'>
-            <Truck className='h-5 w-5' />
-            إعدادات التوصيل
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-            <div className='space-y-2'>
-              <Label htmlFor='deliveryTimeHours'>وقت التوصيل (بالساعات)</Label>
-              <Input
-                id='deliveryTimeHours'
-                type='number'
-                min='1'
-                value={deliverySettings.deliveryTimeHours}
-                onChange={(e) => setDeliverySettings({
-                  ...deliverySettings,
-                  deliveryTimeHours: parseInt(e.target.value) || 1
-                })}
-                placeholder='مثال: 4'
-              />
-              <p className='text-xs text-muted-foreground'>الوقت المتوقع للتوصيل</p>
-            </div>
-            
-            <div className='space-y-2'>
-              <Label htmlFor='deliveryPrice'>سعر التوصيل</Label>
-              <Input
-                id='deliveryPrice'
-                type='number'
-                min='0'
-                step='0.01'
-                value={deliverySettings.deliveryPrice}
-                onChange={(e) => setDeliverySettings({
-                  ...deliverySettings,
-                  deliveryPrice: parseFloat(e.target.value) || 0
-                })}
-                placeholder='مثال: 4.99'
-              />
-              <p className='text-xs text-muted-foreground'>سعر التوصيل لكل طلب</p>
-            </div>
-            
-            <div className='space-y-2'>
-              <Label htmlFor='freeShippingThreshold'>حد التوصيل المجاني</Label>
-              <Input
-                id='freeShippingThreshold'
-                type='number'
-                min='0'
-                step='0.01'
-                value={deliverySettings.freeShippingThreshold}
-                onChange={(e) => setDeliverySettings({
-                  ...deliverySettings,
-                  freeShippingThreshold: parseFloat(e.target.value) || 0
-                })}
-                placeholder='مثال: 50'
-              />
-              <p className='text-xs text-muted-foreground'>الحد الأدنى للطلب للحصول على توصيل مجاني</p>
-            </div>
+        <CardContent className='p-0'>
+          <div className='flex space-x-1 bg-gray-100 p-1 rounded-lg'>
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === tab.id 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Tax Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-xl flex items-center gap-2'>
-            <Calculator className='h-5 w-5' />
-            إعدادات الضرائب
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            <div className='space-y-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='taxRate'>معدل الضريبة (%)</Label>
-                <Input
-                  id='taxRate'
-                  type='number'
-                  min='0'
-                  max='100'
-                  step='0.1'
-                  value={taxSettings.taxRate}
-                  onChange={(e) => setTaxSettings({
-                    ...taxSettings,
-                    taxRate: parseFloat(e.target.value) || 0
-                  })}
-                />
+      {/* Tab Content */}
+      <div className='space-y-6'>
+        {/* Carousel Settings Tab */}
+        {activeTab === 'carousel' && (
+          <Card>
+            <CardHeader>
+              <div className='flex items-center justify-between'>
+                <CardTitle className='text-xl flex items-center gap-2'>
+                  <ImageIcon className='h-5 w-5' />
+                  إعدادات الكاروسيل
+                </CardTitle>
+                <Button onClick={addCarouselItem} size='sm'>
+                  <Plus className='h-4 w-4 ml-2' />
+                  إضافة عنصر
+                </Button>
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='taxExemptThreshold'>حد الإعفاء الضريبي</Label>
-                <Input
-                  id='taxExemptThreshold'
-                  type='number'
-                  min='0'
-                  step='0.01'
-                  value={taxSettings.taxExemptThreshold}
-                  onChange={(e) => setTaxSettings({
-                    ...taxSettings,
-                    taxExemptThreshold: parseFloat(e.target.value) || 0
-                  })}
-                />
-              </div>
-              <div className='flex items-center space-x-2 rtl:space-x-reverse'>
-                <Switch
-                  id='taxIncluded'
-                  checked={taxSettings.taxIncluded}
-                  onCheckedChange={(checked) => setTaxSettings({
-                    ...taxSettings,
-                    taxIncluded: checked
-                  })}
-                />
-                <Label htmlFor='taxIncluded'>الضريبة مشمولة في السعر</Label>
-              </div>
-            </div>
-            
-            <div className='space-y-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='taxExemptCategories'>فئات الإعفاء الضريبي</Label>
-                <Textarea
-                  id='taxExemptCategories'
-                  placeholder='أدخل الفئات مفصولة بفواصل (مثال: prescription-eyewear, optical-devices)'
-                  value={taxSettings.taxExemptCategories.join(', ')}
-                  onChange={(e) => setTaxSettings({
-                    ...taxSettings,
-                    taxExemptCategories: e.target.value.split(',').map(cat => cat.trim()).filter(cat => cat)
-                  })}
-                  rows={4}
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <p className='text-sm text-muted-foreground mt-2'>
+                اسحب العناصر باستخدام أيقونة السحب (⋮⋮) لإعادة ترتيبها
+              </p>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={carouselItems.map((item, index) => item.title + index)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {carouselItems.map((item, index) => (
+                    <SortableCarouselItem
+                      key={item.title + index}
+                      item={item}
+                      index={index}
+                      onUpdate={handleCarouselChange}
+                      onRemove={removeCarouselItem}
+                      isLast={index === carouselItems.length - 1}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Product Pricing Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-xl flex items-center gap-2'>
-            <DollarSign className='h-5 w-5' />
-            إعدادات تسعير المنتجات
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-            <div className='space-y-2'>
-              <Label htmlFor='defaultMarkup'>الهامش الافتراضي (%)</Label>
-              <Input
-                id='defaultMarkup'
-                type='number'
-                min='0'
-                step='0.1'
-                value={productPricing.defaultMarkup}
-                onChange={(e) => setProductPricing({
-                  ...productPricing,
-                  defaultMarkup: parseFloat(e.target.value) || 0
-                })}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='bulkDiscountThreshold'>حد الخصم بالجملة</Label>
-              <Input
-                id='bulkDiscountThreshold'
-                type='number'
-                min='1'
-                value={productPricing.bulkDiscountThreshold}
-                onChange={(e) => setProductPricing({
-                  ...productPricing,
-                  bulkDiscountThreshold: parseInt(e.target.value) || 1
-                })}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='bulkDiscountRate'>نسبة الخصم بالجملة (%)</Label>
-              <Input
-                id='bulkDiscountRate'
-                type='number'
-                min='0'
-                max='100'
-                step='0.1'
-                value={productPricing.bulkDiscountRate}
-                onChange={(e) => setProductPricing({
-                  ...productPricing,
-                  bulkDiscountRate: parseFloat(e.target.value) || 0
-                })}
-              />
-            </div>
-          </div>
+        {/* Categories Tab */}
+        {activeTab === 'categories' && (
+          <CategoryManager />
+        )}
 
-          {/* Seasonal Discounts */}
-          <div className='space-y-4'>
-            <div className='flex items-center justify-between'>
-              <h4 className='font-semibold text-lg'>الخصومات الموسمية</h4>
-              <Button onClick={addSeasonalDiscount} size='sm'>
-                <Plus className='h-4 w-4 ml-2' />
-                إضافة خصم موسمي
-              </Button>
-            </div>
-            
-            <div className='space-y-4'>
-              {productPricing.seasonalDiscounts.map((discount, index) => (
-                <div key={index} className='border rounded-lg p-4 space-y-4'>
-                  <div className='flex items-center justify-between'>
-                    <h5 className='font-medium'>الخصم الموسمي {index + 1}</h5>
-                    <Button
-                      variant='destructive'
-                      size='sm'
-                      onClick={() => removeSeasonalDiscount(index)}
-                    >
-                      <Trash2 className='h-4 w-4 ml-2' />
-                      حذف
-                    </Button>
-                  </div>
-                  
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    <div className='space-y-2'>
-                      <Label htmlFor={`discountName${index}`}>اسم الخصم</Label>
-                      <Input
-                        id={`discountName${index}`}
-                        value={discount.name}
-                        onChange={(e) => updateSeasonalDiscount(index, 'name', e.target.value)}
-                        placeholder='اسم الخصم'
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor={`discountRate${index}`}>نسبة الخصم (%)</Label>
-                      <Input
-                        id={`discountRate${index}`}
-                        type='number'
-                        min='0'
-                        max='100'
-                        step='0.1'
-                        value={discount.discountRate}
-                        onChange={(e) => updateSeasonalDiscount(index, 'discountRate', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    <div className='space-y-2'>
-                      <Label htmlFor={`startDate${index}`}>تاريخ البداية</Label>
-                      <Input
-                        id={`startDate${index}`}
-                        type='date'
-                        value={discount.startDate}
-                        onChange={(e) => updateSeasonalDiscount(index, 'startDate', e.target.value)}
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor={`endDate${index}`}>تاريخ النهاية</Label>
-                      <Input
-                        id={`endDate${index}`}
-                        type='date'
-                        value={discount.endDate}
-                        onChange={(e) => updateSeasonalDiscount(index, 'endDate', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
+        {/* Videos Tab */}
+        {activeTab === 'videos' && (
+          <VideoManager videos={videos} onVideosChange={setVideos} />
+        )}
+
+        {/* Delivery Settings Tab */}
+        {activeTab === 'delivery' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-xl flex items-center gap-2'>
+                <Truck className='h-5 w-5' />
+                إعدادات التوصيل
+              </CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                <div className='space-y-2'>
+                  <Label htmlFor='deliveryTimeHours'>وقت التوصيل (بالساعات)</Label>
+                  <Input
+                    id='deliveryTimeHours'
+                    type='number'
+                    min='1'
+                    value={deliverySettings.deliveryTimeHours}
+                    onChange={(e) => setDeliverySettings({
+                      ...deliverySettings,
+                      deliveryTimeHours: parseInt(e.target.value) || 1
+                    })}
+                    placeholder='مثال: 4'
+                  />
+                  <p className='text-xs text-muted-foreground'>الوقت المتوقع للتوصيل</p>
+                </div>
+                
+                <div className='space-y-2'>
+                  <Label htmlFor='deliveryPrice'>سعر التوصيل</Label>
+                  <Input
+                    id='deliveryPrice'
+                    type='number'
+                    min='0'
+                    step='0.01'
+                    value={deliverySettings.deliveryPrice}
+                    onChange={(e) => setDeliverySettings({
+                      ...deliverySettings,
+                      deliveryPrice: parseFloat(e.target.value) || 0
+                    })}
+                    placeholder='مثال: 4.99'
+                  />
+                  <p className='text-xs text-muted-foreground'>سعر التوصيل لكل طلب</p>
+                </div>
+                
+                <div className='space-y-2'>
+                  <Label htmlFor='freeShippingThreshold'>حد التوصيل المجاني</Label>
+                  <Input
+                    id='freeShippingThreshold'
+                    type='number'
+                    min='0'
+                    step='0.01'
+                    value={deliverySettings.freeShippingThreshold}
+                    onChange={(e) => setDeliverySettings({
+                      ...deliverySettings,
+                      freeShippingThreshold: parseFloat(e.target.value) || 0
+                    })}
+                    placeholder='مثال: 50'
+                  />
+                  <p className='text-xs text-muted-foreground'>الحد الأدنى للطلب للحصول على توصيل مجاني</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tax Settings Tab */}
+        {activeTab === 'tax' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-xl flex items-center gap-2'>
+                <Calculator className='h-5 w-5' />
+                إعدادات الضرائب
+              </CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='space-y-4'>
                   <div className='space-y-2'>
-                    <Label htmlFor={`applicableCategories${index}`}>الفئات المطبقة</Label>
-                    <Textarea
-                      id={`applicableCategories${index}`}
-                      placeholder='أدخل الفئات مفصولة بفواصل (مثال: sunglasses, contact-lenses)'
-                      value={discount.applicableCategories.join(', ')}
-                      onChange={(e) => updateSeasonalDiscount(index, 'applicableCategories', e.target.value.split(',').map(cat => cat.trim()).filter(cat => cat))}
-                      rows={2}
+                    <Label htmlFor='taxRate'>معدل الضريبة (%)</Label>
+                    <Input
+                      id='taxRate'
+                      type='number'
+                      min='0'
+                      max='100'
+                      step='0.1'
+                      value={taxSettings.taxRate}
+                      onChange={(e) => setTaxSettings({
+                        ...taxSettings,
+                        taxRate: parseFloat(e.target.value) || 0
+                      })}
                     />
                   </div>
-                  
-                  {index < productPricing.seasonalDiscounts.length - 1 && <Separator />}
+                  <div className='space-y-2'>
+                    <Label htmlFor='taxExemptThreshold'>حد الإعفاء الضريبي</Label>
+                    <Input
+                      id='taxExemptThreshold'
+                      type='number'
+                      min='0'
+                      step='0.01'
+                      value={taxSettings.taxExemptThreshold}
+                      onChange={(e) => setTaxSettings({
+                        ...taxSettings,
+                        taxExemptThreshold: parseFloat(e.target.value) || 0
+                      })}
+                    />
+                  </div>
+                  <div className='flex items-center space-x-2 rtl:space-x-reverse'>
+                    <Switch
+                      id='taxIncluded'
+                      checked={taxSettings.taxIncluded}
+                      onCheckedChange={(checked) => setTaxSettings({
+                        ...taxSettings,
+                        taxIncluded: checked
+                      })}
+                    />
+                    <Label htmlFor='taxIncluded'>الضريبة مشمولة في السعر</Label>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                
+                <div className='space-y-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='taxExemptCategories'>فئات الإعفاء الضريبي</Label>
+                    <Textarea
+                      id='taxExemptCategories'
+                      placeholder='أدخل الفئات مفصولة بفواصل (مثال: prescription-eyewear, optical-devices)'
+                      value={taxSettings.taxExemptCategories.join(', ')}
+                      onChange={(e) => setTaxSettings({
+                        ...taxSettings,
+                        taxExemptCategories: e.target.value.split(',').map(cat => cat.trim()).filter(cat => cat)
+                      })}
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Product Pricing Tab */}
+        {activeTab === 'pricing' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-xl flex items-center gap-2'>
+                <DollarSign className='h-5 w-5' />
+                إعدادات تسعير المنتجات
+              </CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                <div className='space-y-2'>
+                  <Label htmlFor='defaultMarkup'>الهامش الافتراضي (%)</Label>
+                  <Input
+                    id='defaultMarkup'
+                    type='number'
+                    min='0'
+                    step='0.1'
+                    value={productPricing.defaultMarkup}
+                    onChange={(e) => setProductPricing({
+                      ...productPricing,
+                      defaultMarkup: parseFloat(e.target.value) || 0
+                    })}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='bulkDiscountThreshold'>حد الخصم بالجملة</Label>
+                  <Input
+                    id='bulkDiscountThreshold'
+                    type='number'
+                    min='1'
+                    value={productPricing.bulkDiscountThreshold}
+                    onChange={(e) => setProductPricing({
+                      ...productPricing,
+                      bulkDiscountThreshold: parseInt(e.target.value) || 1
+                    })}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='bulkDiscountRate'>نسبة الخصم بالجملة (%)</Label>
+                  <Input
+                    id='bulkDiscountRate'
+                    type='number'
+                    min='0'
+                    max='100'
+                    step='0.1'
+                    value={productPricing.bulkDiscountRate}
+                    onChange={(e) => setProductPricing({
+                      ...productPricing,
+                      bulkDiscountRate: parseFloat(e.target.value) || 0
+                    })}
+                  />
+                </div>
+              </div>
+
+              {/* Seasonal Discounts */}
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <h4 className='font-semibold text-lg'>الخصومات الموسمية</h4>
+                  <Button onClick={addSeasonalDiscount} size='sm'>
+                    <Plus className='h-4 w-4 ml-2' />
+                    إضافة خصم موسمي
+                  </Button>
+                </div>
+                
+                <div className='space-y-4'>
+                  {productPricing.seasonalDiscounts.map((discount, index) => (
+                    <div key={index} className='border rounded-lg p-4 space-y-4'>
+                      <div className='flex items-center justify-between'>
+                        <h5 className='font-medium'>الخصم الموسمي {index + 1}</h5>
+                        <Button
+                          variant='destructive'
+                          size='sm'
+                          onClick={() => removeSeasonalDiscount(index)}
+                        >
+                          <Trash2 className='h-4 w-4 ml-2' />
+                          حذف
+                        </Button>
+                      </div>
+                      
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='space-y-2'>
+                          <Label htmlFor={`discountName${index}`}>اسم الخصم</Label>
+                          <Input
+                            id={`discountName${index}`}
+                            value={discount.name}
+                            onChange={(e) => updateSeasonalDiscount(index, 'name', e.target.value)}
+                            placeholder='اسم الخصم'
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor={`discountRate${index}`}>نسبة الخصم (%)</Label>
+                          <Input
+                            id={`discountRate${index}`}
+                            type='number'
+                            min='0'
+                            max='100'
+                            step='0.1'
+                            value={discount.discountRate}
+                            onChange={(e) => updateSeasonalDiscount(index, 'discountRate', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='space-y-2'>
+                          <Label htmlFor={`startDate${index}`}>تاريخ البداية</Label>
+                          <Input
+                            id={`startDate${index}`}
+                            type='date'
+                            value={discount.startDate}
+                            onChange={(e) => updateSeasonalDiscount(index, 'startDate', e.target.value)}
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor={`endDate${index}`}>تاريخ النهاية</Label>
+                          <Input
+                            id={`endDate${index}`}
+                            type='date'
+                            value={discount.endDate}
+                            onChange={(e) => updateSeasonalDiscount(index, 'endDate', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className='space-y-2'>
+                        <Label htmlFor={`applicableCategories${index}`}>الفئات المطبقة</Label>
+                        <Textarea
+                          id={`applicableCategories${index}`}
+                          placeholder='أدخل الفئات مفصولة بفواصل (مثال: sunglasses, contact-lenses)'
+                          value={discount.applicableCategories.join(', ')}
+                          onChange={(e) => updateSeasonalDiscount(index, 'applicableCategories', e.target.value.split(',').map(cat => cat.trim()).filter(cat => cat))}
+                          rows={2}
+                        />
+                      </div>
+                      
+                      {index < productPricing.seasonalDiscounts.length - 1 && <Separator />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Chat Content Tab */}
+        {activeTab === 'chat' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>إدارة محتوى الدردشة المساعدة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChatContentManager
+                chatContent={chatContent}
+                onSave={(newChatContent) => {
+                  setChatContent(newChatContent)
+                }}
+              />
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Save Button */}
       <div className='flex justify-end'>

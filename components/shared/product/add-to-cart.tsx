@@ -11,7 +11,6 @@ import { IProduct } from '@/types'
 import { useLoading } from '@/hooks/use-loading'
 import { LoadingSpinner } from '@/components/shared/loading-overlay'
 import SelectVariant from './select-variant'
-import TryOnDialog from './try-on-dialog'
 import LensSizeSelector from './lens-size-selector'
 
 interface AddToCartProps {
@@ -66,6 +65,7 @@ export default function AddToCart({ product, className }: AddToCartProps) {
           lensSize: selectedLensSize || product.lensSizes?.[0] || '',
           quantity: 1,
           clientId: `${product.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          requiresMedicalCertificate: product.requiresMedicalCertificate || false,
         }, quantity)
 
         toast({
@@ -160,17 +160,6 @@ export default function AddToCart({ product, className }: AddToCartProps) {
           </Button>
         </div>
         
-        {/* Virtual Try-On Button - right side for RTL */}
-        <div className='flex-shrink-0'>
-          {(() => {
-            const vtoTag = Array.isArray(product.tags)
-              ? product.tags.find((t: string) => typeof t === 'string' && t.startsWith('vto='))
-              : undefined
-            const vtoUrl = vtoTag ? vtoTag.slice(4) : undefined
-            const overlayUrl = vtoUrl || product.images?.[0]
-            return <TryOnDialog overlayImageUrl={overlayUrl} triggerClassName="bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2" />
-          })()}
-        </div>
       </div>
 
       <Button

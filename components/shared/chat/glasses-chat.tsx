@@ -15,9 +15,32 @@ import {
   Zap, 
   ArrowRight,
   Bot,
-  User
+  User,
+  Camera,
+  Upload
 } from 'lucide-react'
 import Link from 'next/link'
+import { FaceShapeDetector } from '@/components/face-shape-detector'
+import { UploadButton } from '@/lib/uploadthing'
+import { useToast } from '@/hooks/use-toast'
+
+// Icon options for chat
+const iconOptions = [
+  { value: 'Monitor', label: 'Monitor', icon: <Monitor className="w-4 h-4" /> },
+  { value: 'Sun', label: 'Sun', icon: <Sun className="w-4 h-4" /> },
+  { value: 'BookOpen', label: 'Book Open', icon: <BookOpen className="w-4 h-4" /> },
+  { value: 'Heart', label: 'Heart', icon: <Heart className="w-4 h-4" /> },
+  { value: 'Zap', label: 'Zap', icon: <Zap className="w-4 h-4" /> },
+  { value: 'Eye', label: 'Eye', icon: <Eye className="w-4 h-4" /> },
+  { value: 'Camera', label: 'Camera', icon: <Camera className="w-4 h-4" /> },
+  { value: 'Upload', label: 'Upload', icon: <Upload className="w-4 h-4" /> },
+]
+
+// Helper function to get icon component
+const getIconComponent = (iconName: string) => {
+  const iconOption = iconOptions.find(opt => opt.value === iconName)
+  return iconOption ? iconOption.icon : <Heart className="w-4 h-4" />
+}
 
 interface ChatMessage {
   id: string
@@ -25,6 +48,11 @@ interface ChatMessage {
   content: string
   timestamp: Date
   options?: ChatOption[]
+  faceShapeData?: {
+    faceShape: string
+    confidence: number
+    recommendations: string[]
+  }
 }
 
 interface ChatOption {
@@ -217,7 +245,31 @@ const chatResults: { [key: string]: ChatResult } = {
   }
 }
 
-export default function GlassesChat() {
+interface GlassesChatProps {
+  chatContent?: {
+    welcomeMessage?: string
+    questions?: Array<{
+      id: string
+      question: string
+      options: Array<{
+        id: string
+        text: string
+        icon: string
+        score: { [key: string]: number }
+      }>
+    }>
+    results?: { [key: string]: {
+      category: string
+      title: string
+      description: string
+      icon: string
+      color: string
+      url: string
+    }}
+  }
+}
+
+export default function GlassesChat({ chatContent }: GlassesChatProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [hasBeenOpened, setHasBeenOpened] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -231,7 +283,15 @@ export default function GlassesChat() {
     care: 0
   })
   const [isComplete, setIsComplete] = useState(false)
+  const [showFaceShape, setShowFaceShape] = useState(false)
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
+  const [faceShapeResult, setFaceShapeResult] = useState<{
+    faceShape: string
+    confidence: number
+    recommendations: string[]
+  } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
 
   // Check localStorage on component mount
   useEffect(() => {
@@ -257,7 +317,7 @@ export default function GlassesChat() {
       {
         id: '1',
         type: 'bot',
-        content: 'مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!',
+        content: chatContent?.welcomeMessage || 'مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!',
         timestamp: new Date()
       }
     ])
@@ -265,19 +325,23 @@ export default function GlassesChat() {
   }
 
   const askQuestion = (questionIndex: number) => {
-    if (questionIndex >= chatQuestions.length) {
+    const questions = chatContent?.questions || chatQuestions
+    if (questionIndex >= questions.length) {
       showResult()
       return
     }
 
-    const question = chatQuestions[questionIndex]
+    const question = questions[questionIndex]
     setTimeout(() => {
       setMessages(prev => [...prev, {
         id: `question-${questionIndex}`,
         type: 'bot',
         content: question.question,
         timestamp: new Date(),
-        options: question.options
+        options: question.options.map(option => ({
+          ...option,
+          icon: typeof option.icon === 'string' ? getIconComponent(option.icon) : option.icon
+        }))
       }])
     }, 1000)
   }
@@ -317,31 +381,286 @@ export default function GlassesChat() {
   const showResult = () => {
     const maxScore = Math.max(...Object.values(scores))
     const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
-    const result = chatResults[resultCategory]
+    const results = chatContent?.results || chatResults
+    const result = results[resultCategory]
+
+    if (result) {
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: 'result',
+          type: 'bot',
+          content: `بناءً على إجاباتك، أعتقد أن ${result.title} سيكون الخيار الأمثل لك!`,
+          timestamp: new Date()
+        }])
+      }, 1000)
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: 'result-details',
+          type: 'bot',
+          content: result.description,
+          timestamp: new Date()
+        }])
+      }, 2000)
+    }
 
     setTimeout(() => {
       setMessages(prev => [...prev, {
-        id: 'result',
+        id: 'face-shape-question',
         type: 'bot',
-        content: `بناءً على إجاباتك، أعتقد أن ${result.title} سيكون الخيار الأمثل لك!`,
+        content: 'لإعطائك توصيات أكثر دقة، هل تريد تحليل شكل وجهك لاختيار شكل النظارات المناسب؟',
+        timestamp: new Date(),
+        options: [
+          {
+            id: 'analyze-face',
+            text: 'نعم، أريد تحليل شكل وجهي',
+            icon: <Camera className="w-4 h-4" />,
+            score: {}
+          },
+          {
+            id: 'skip-face-analysis',
+            text: 'لا، أريد رؤية المنتجات مباشرة',
+            icon: <ArrowRight className="w-4 h-4" />,
+            score: {}
+          }
+        ]
+      }])
+    }, 3000)
+
+    setIsComplete(true)
+  }
+
+  const handleResultAction = (option: ChatOption) => {
+    if (option.id === 'analyze-face') {
+      setMessages(prev => [...prev, {
+        id: `user-action-${Date.now()}`,
+        type: 'user',
+        content: option.text,
         timestamp: new Date()
+      }])
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: `face-shape-instructions`,
+          type: 'bot',
+          content: 'ممتاز! رفع صورة واضحة لوجهك وسأحلل شكل وجهك وأعطيك توصيات دقيقة لشكل النظارات المناسب.',
+          timestamp: new Date()
+        }])
+      }, 500)
+
+      setShowFaceShape(true)
+    } else if (option.id === 'skip-face-analysis') {
+      setMessages(prev => [...prev, {
+        id: `user-action-${Date.now()}`,
+        type: 'user',
+        content: option.text,
+        timestamp: new Date()
+      }])
+
+      setTimeout(() => {
+        showFinalResults()
+      }, 500)
+    } else if (option.id === 'view-products') {
+      // Find the stored product URL
+      const productUrlMessage = messages.find(msg => msg.id === 'product-url')
+      const urlToOpen = productUrlMessage?.content || chatResults[Object.keys(scores).find(category => scores[category] === Math.max(...Object.values(scores))) || 'medical'].url
+      
+      // Open the products page in a new tab
+      window.open(urlToOpen, '_blank')
+      
+      setMessages(prev => [...prev, {
+        id: `user-action-${Date.now()}`,
+        type: 'user',
+        content: option.text,
+        timestamp: new Date()
+      }])
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: `bot-final-${Date.now()}`,
+          type: 'bot',
+          content: faceShapeResult 
+            ? `ممتاز! لقد فتحت صفحة المنتجات المناسبة لوجهك (شكل ${faceShapeResult.faceShape}). إذا كنت بحاجة إلى مساعدة أخرى، لا تتردد في سؤالي!`
+            : 'ممتاز! لقد فتحت صفحة المنتجات المقترحة لك. إذا كنت بحاجة إلى مساعدة أخرى، لا تتردد في سؤالي!',
+          timestamp: new Date()
+        }])
+      }, 500)
+    } else if (option.id === 'restart') {
+      resetChat()
+    }
+  }
+
+  const handleFaceShapeResult = (result: any) => {
+    const recommendations = getGlassesRecommendations(result.faceShape)
+    const faceShapeData = {
+      faceShape: result.faceShape,
+      confidence: result.confidence,
+      recommendations
+    }
+    
+    setFaceShapeResult(faceShapeData)
+    
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        id: `face-shape-result`,
+        type: 'bot',
+        content: `تم تحليل وجهك بنجاح! الشكل المناسب لك هو: ${result.faceShape} (دقة: ${result.confidence}%)`,
+        timestamp: new Date(),
+        faceShapeData
       }])
     }, 1000)
 
     setTimeout(() => {
       setMessages(prev => [...prev, {
-        id: 'result-details',
+        id: `face-shape-recommendations`,
         type: 'bot',
-        content: result.description,
+        content: 'بناءً على تحليل وجهك، إليك معلومات عن هذا الشكل من النظارات:',
         timestamp: new Date()
       }])
     }, 2000)
 
     setTimeout(() => {
       setMessages(prev => [...prev, {
-        id: 'result-action',
+        id: `face-shape-details`,
         type: 'bot',
-        content: 'هل تريد أن أرشدك إلى المنتجات المقترحة؟',
+        content: recommendations.join('\n• '),
+        timestamp: new Date()
+      }])
+    }, 3000)
+
+    setTimeout(() => {
+      showFinalResults()
+    }, 4000)
+  }
+
+  const handleFaceShapeError = (error: string) => {
+    toast({
+      variant: 'destructive',
+      description: `خطأ في تحليل الوجه: ${error}`,
+    })
+    
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        id: `face-shape-error`,
+        type: 'bot',
+        content: 'عذراً، حدث خطأ في تحليل الصورة. دعني أعطيك التوصيات العامة بناءً على إجاباتك.',
+        timestamp: new Date()
+      }])
+    }, 1000)
+
+    setTimeout(() => {
+      showFinalResults()
+    }, 2000)
+  }
+
+  const getGlassesRecommendations = (glassesShape: string): string[] => {
+    const recommendations: { [key: string]: string[] } = {
+      'Oval': [
+        'النظارات البيضاوية تناسب معظم أشكال الوجوه',
+        'تعطي مظهراً أنيقاً ومتوازناً',
+        'مناسبة للاستخدام اليومي والعمل',
+        'خيار آمن ومناسب لجميع المناسبات'
+      ],
+      'Round': [
+        'النظارات الدائرية تضيف لمسة عصرية',
+        'تناسب الوجوه المربعة والمستطيلة',
+        'تعطي مظهراً ودوداً ومرحاً',
+        'مثالية للشخصيات الإبداعية'
+      ],
+      'Square': [
+        'النظارات المربعة تعطي مظهراً قوياً',
+        'تناسب الوجوه الدائرية والبيضاوية',
+        'تضيف حدة وأناقة للوجه',
+        'مناسبة للشخصيات المهنية'
+      ],
+      'Rectangle': [
+        'النظارات المستطيلة تعطي مظهراً كلاسيكياً',
+        'تناسب الوجوه الدائرية والبيضاوية',
+        'تضيف طولاً للوجه',
+        'مناسبة للاستخدام الرسمي'
+      ],
+      'Heart': [
+        'النظارات القلبية تعطي مظهراً رومانسياً',
+        'تناسب الوجوه المربعة والمستطيلة',
+        'تضيف أنوثة وجاذبية',
+        'مثالية للمناسبات الخاصة'
+      ],
+      'Diamond': [
+        'النظارات الماسية تعطي مظهراً فاخراً',
+        'تناسب الوجوه الدائرية والبيضاوية',
+        'تضيف بريقاً وأناقة',
+        'مثالية للشخصيات الجريئة'
+      ],
+      'Cat-Eye': [
+        'نظارات عين القطة تعطي مظهراً أنثوياً',
+        'تناسب معظم أشكال الوجوه',
+        'تضيف لمسة عصرية وجذابة',
+        'مثالية للشخصيات الواثقة'
+      ],
+      'Aviator': [
+        'نظارات الطيار تعطي مظهراً رياضياً',
+        'تناسب الوجوه المربعة والمستطيلة',
+        'تضيف أناقة وثقة',
+        'مثالية للشخصيات المغامرة'
+      ],
+      'Wayfarer': [
+        'نظارات وايفارير تعطي مظهراً كلاسيكياً',
+        'تناسب معظم أشكال الوجوه',
+        'تضيف أناقة خالدة',
+        'مناسبة لجميع الأعمار'
+      ],
+      'Browline': [
+        'نظارات برولاين تعطي مظهراً ذكياً',
+        'تناسب الوجوه الدائرية والبيضاوية',
+        'تضيف حكمة وأناقة',
+        'مثالية للشخصيات الأكاديمية'
+      ],
+      'Rimless': [
+        'النظارات بدون إطار تعطي مظهراً نظيفاً',
+        'تناسب جميع أشكال الوجوه',
+        'تضيف أناقة بسيطة',
+        'مثالية للشخصيات المحافظة'
+      ],
+      'Semi-Rimless': [
+        'النظارات نصف الإطار تعطي مظهراً متوازناً',
+        'تناسب جميع أشكال الوجوه',
+        'تضيف أناقة مع الحفاظ على البساطة',
+        'مناسبة للاستخدام اليومي'
+      ]
+    }
+    
+    return recommendations[glassesShape] || [
+      'هذا الشكل من النظارات مناسب لوجهك',
+      'جرب أشكال مختلفة لترى ما يناسبك',
+      'استشر أخصائي النظارات للحصول على نصيحة شخصية'
+    ]
+  }
+
+  const getRecommendedGlassesShapes = (glassesShape: string): string[] => {
+    // Since we're now returning glasses shapes directly, we just return the detected shape
+    return [glassesShape]
+  }
+
+  const showFinalResults = () => {
+    const maxScore = Math.max(...Object.values(scores))
+    const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
+    const result = chatResults[resultCategory]
+
+    // Build URL with face shape filter if available
+    let productUrl = result.url
+    if (faceShapeResult) {
+      const recommendedShapes = getRecommendedGlassesShapes(faceShapeResult.faceShape)
+      const shapeParams = recommendedShapes.map(shape => `glassesShape=${encodeURIComponent(shape)}`).join('&')
+      productUrl = `${result.url}&${shapeParams}`
+    }
+
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        id: 'final-result',
+        type: 'bot',
+        content: faceShapeResult 
+          ? `بناءً على تحليل وجهك (شكل ${faceShapeResult.faceShape}) واحتياجاتك، سأرشدك إلى النظارات المناسبة لك!`
+          : 'هل تريد أن أرشدك إلى المنتجات المقترحة؟',
         timestamp: new Date(),
         options: [
           {
@@ -358,38 +677,15 @@ export default function GlassesChat() {
           }
         ]
       }])
-    }, 3000)
+    }, 1000)
 
-    setIsComplete(true)
-  }
-
-  const handleResultAction = (option: ChatOption) => {
-    if (option.id === 'view-products') {
-      const maxScore = Math.max(...Object.values(scores))
-      const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
-      const result = chatResults[resultCategory]
-      
-      // Open the products page in a new tab
-      window.open(result.url, '_blank')
-      
-      setMessages(prev => [...prev, {
-        id: `user-action-${Date.now()}`,
-        type: 'user',
-        content: option.text,
-        timestamp: new Date()
-      }])
-
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: `bot-final-${Date.now()}`,
-          type: 'bot',
-          content: 'ممتاز! لقد فتحت صفحة المنتجات المقترحة لك. إذا كنت بحاجة إلى مساعدة أخرى، لا تتردد في سؤالي!',
-          timestamp: new Date()
-        }])
-      }, 500)
-    } else if (option.id === 'restart') {
-      resetChat()
-    }
+    // Store the URL for later use
+    setMessages(prev => [...prev, {
+      id: 'product-url',
+      type: 'bot',
+      content: productUrl,
+      timestamp: new Date()
+    }])
   }
 
   const resetChat = () => {
@@ -404,6 +700,9 @@ export default function GlassesChat() {
       care: 0
     })
     setIsComplete(false)
+    setShowFaceShape(false)
+    setUploadedImage(null)
+    setFaceShapeResult(null)
     startChat()
   }
 
@@ -413,22 +712,26 @@ export default function GlassesChat() {
 
   return (
     <>
-      {/* Chat Button */}
+      {/* Chat Button - Desktop Only */}
       {!isOpen && (
-        <Button
+        <div
+          data-chat-trigger
           onClick={startChat}
-          className={`fixed bottom-24 left-4 sm:bottom-6 sm:left-6 z-50 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 ${
+          className={`hidden sm:flex fixed bottom-6 left-6 z-50 h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer items-start justify-start overflow-hidden ${
             !hasBeenOpened ? 'animate-pulse' : ''
           }`}
-          size="lg"
         >
-          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-        </Button>
+          <img 
+            src="/icons/glasses-shades-on.gif" 
+            alt="Chat Assistant" 
+            className="w-full h-full object-contain transform scale-100 translate-x-[-4px] translate-y-[-4px]"
+          />
+        </div>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-4 left-2 right-2 sm:bottom-6 sm:left-6 sm:right-auto z-50 w-auto sm:w-80 h-80 sm:h-96 bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col">
+        <div className="fixed bottom-4 left-2 right-2 sm:bottom-6 sm:left-6 sm:right-auto z-50 w-auto sm:w-[32rem] h-[32rem] sm:h-[36rem] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col">
           {/* Chat Header */}
           <div className="bg-primary text-white p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -468,6 +771,86 @@ export default function GlassesChat() {
                     )}
                     <div className="flex-1">
                       <p className="text-sm">{message.content}</p>
+                      
+                      {/* Face Shape Detection UI */}
+                      {showFaceShape && message.id === 'face-shape-instructions' && (
+                        <div className="mt-4 space-y-3">
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            {!uploadedImage ? (
+                              <div className="space-y-2">
+                                <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                                <p className="text-xs text-gray-600">ارفع صورة واضحة لوجهك</p>
+                                <UploadButton
+                                  endpoint="imageUploader"
+                                  onClientUploadComplete={(res) => {
+                                    if (res && res[0]?.url) {
+                                      setUploadedImage(res[0].url)
+                                      toast({
+                                        description: 'تم رفع الصورة بنجاح! اضغط على "تحليل شكل الوجه" للبدء',
+                                      })
+                                    }
+                                  }}
+                                  onUploadError={(error: Error) => {
+                                    toast({
+                                      variant: 'destructive',
+                                      description: `خطأ في رفع الصورة: ${error.message}`,
+                                    })
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <img
+                                  src={uploadedImage}
+                                  alt="Face for analysis"
+                                  className="w-20 h-20 object-cover rounded-lg mx-auto"
+                                />
+                                <p className="text-xs text-green-600">تم رفع الصورة بنجاح</p>
+                                <Button
+                                  size="sm"
+                                  onClick={() => setUploadedImage(null)}
+                                  className="text-xs"
+                                >
+                                  تغيير الصورة
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {uploadedImage && (
+                            <FaceShapeDetector
+                              imageUrl={uploadedImage}
+                              onResult={handleFaceShapeResult}
+                              onError={handleFaceShapeError}
+                              onDetect={() => {
+                                setMessages(prev => [...prev, {
+                                  id: `user-analyzing-${Date.now()}`,
+                                  type: 'user',
+                                  content: 'جاري تحليل شكل الوجه...',
+                                  timestamp: new Date()
+                                }])
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Face Shape Results Display */}
+                      {message.faceShapeData && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Camera className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-800">
+                              تحليل شكل الوجه
+                            </span>
+                          </div>
+                          <div className="space-y-1 text-xs text-blue-700">
+                            <p><strong>الشكل:</strong> {message.faceShapeData.faceShape}</p>
+                            <p><strong>الدقة:</strong> {message.faceShapeData.confidence}%</p>
+                          </div>
+                        </div>
+                      )}
+                      
                       {message.options && (
                         <div className="mt-3 space-y-2">
                           {message.options.map((option) => (
