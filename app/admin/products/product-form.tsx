@@ -221,6 +221,12 @@ const ProductForm = ({
                     <Input 
                       {...field} 
                       className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
+                      onChange={(e) => {
+                        field.onChange(e)
+                        // Auto-generate slug when name changes
+                        const slug = toSlug(e.target.value)
+                        form.setValue('slug', slug)
+                      }}
                     />
                   </FormControl>
 
@@ -229,6 +235,27 @@ const ProductForm = ({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name='slug'
+              render={({ field }) => (
+                <FormItem className='w-full'>
+                  <FormLabel className='text-gray-900 font-semibold'>الرابط (Slug)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
+                      placeholder='سيتم إنشاؤه تلقائياً من اسم المنتج'
+                    />
+                  </FormControl>
+                  <p className='text-sm text-gray-600'>الرابط المستخدم في URL المنتج</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className='flex flex-col gap-5 md:flex-row'>
             <FormField
               control={form.control}
               name='category'

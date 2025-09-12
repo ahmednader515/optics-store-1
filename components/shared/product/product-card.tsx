@@ -24,7 +24,7 @@ const ProductCard = ({
   const ProductImage = () => (
     <div className="relative group w-full h-full">
       <Link href={`/product/${product.slug}`}>
-        <div className="relative h-24 w-24 md:h-48 md:w-full sm:md:h-56 lg:md:h-64 overflow-hidden rounded-lg bg-gray-50">
+        <div className="relative h-24 w-24 md:h-48 md:w-full sm:md:h-56 lg:md:h-64 overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center">
           {product.images.length > 1 ? (
             <ImageHover
               src={product.images[0]}
@@ -72,7 +72,7 @@ const ProductCard = ({
         className="block group"
       >
         <h3 
-          className="font-semibold text-gray-900 text-right leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-200 text-xs md:text-sm lg:text-base"
+          className="font-semibold text-black text-right leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-200 text-xs md:text-sm lg:text-base"
           style={{
             display: "-webkit-box",
             WebkitLineClamp: 2,

@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       ...product,
       price: Number(product.price),
       listPrice: Number(product.listPrice),
+      deliveryPrice: Number(product.deliveryPrice),
     }))
 
     return NextResponse.json({

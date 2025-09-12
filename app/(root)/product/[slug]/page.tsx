@@ -95,6 +95,7 @@ async function ProductHeader({ slug }: { slug: string }) {
     ...product,
     price: Number(product.price),
     listPrice: Number(product.listPrice),
+    deliveryPrice: Number(product.deliveryPrice),
     avgRating: Number(product.avgRating),
     numReviews: Number(product.numReviews),
   }

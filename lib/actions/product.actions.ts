@@ -248,6 +248,7 @@ export async function getAllProductsForAdmin({
       ...p,
       price: Number(p.price),
       listPrice: Number(p.listPrice),
+      deliveryPrice: Number(p.deliveryPrice),
     }))
 
     // If no products in database, fall back to mock data
@@ -524,6 +525,7 @@ export async function getAllProducts({
       ...p,
       price: Number(p.price),
       listPrice: Number(p.listPrice),
+      deliveryPrice: Number(p.deliveryPrice),
     }))
 
     return {
