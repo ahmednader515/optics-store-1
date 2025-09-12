@@ -82,8 +82,11 @@ export async function getWebPageById(webPageId: string) {
 // GET ONE PAGE BY SLUG
 export async function getWebPageBySlug(slug: string) {
   try {
+    // Decode the slug to handle Arabic characters properly
+    const decodedSlug = decodeURIComponent(slug)
+    
     const webPage = await prisma.webPage.findFirst({
-      where: { slug, isPublished: true }
+      where: { slug: decodedSlug, isPublished: true }
     })
     if (!webPage) return null
     return JSON.parse(JSON.stringify(webPage))

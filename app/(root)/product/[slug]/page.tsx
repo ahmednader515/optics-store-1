@@ -9,6 +9,28 @@ import Rating from '@/components/shared/product/rating'
 import ReviewList from './review-list'
 import { Separator } from '@/components/ui/separator'
 
+export async function generateMetadata(props: {
+  params: Promise<{ slug: string }>
+}) {
+  const params = await props.params
+  const { slug } = params
+  // Decode the slug to handle Arabic characters properly
+  const decodedSlug = decodeURIComponent(slug)
+  
+  const product = await prisma.product.findFirst({
+    where: { slug: decodedSlug, isPublished: true }
+  })
+  
+  if (!product) {
+    return { title: 'Product not found' }
+  }
+  
+  return {
+    title: product.name,
+    description: product.description,
+  }
+}
+
 interface ProductPageProps {
   params: Promise<{
     slug: string
@@ -187,17 +209,20 @@ async function ReviewsSection({ slug }: { slug: string }) {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params
+  
+  // Decode the slug to handle Arabic characters properly
+  const decodedSlug = decodeURIComponent(slug)
 
   return (
     <div className='container mx-auto px-4 py-6 sm:py-8' dir="rtl">
       {/* Product Header - Load first */}
       <Suspense fallback={<ProductHeaderSkeleton />}>
-        <ProductHeader slug={slug} />
+        <ProductHeader slug={decodedSlug} />
       </Suspense>
 
       {/* Reviews Section - Load second */}
       <Suspense fallback={<ReviewsSkeleton />}>
-        <ReviewsSection slug={slug} />
+        <ReviewsSection slug={decodedSlug} />
       </Suspense>
     </div>
   )

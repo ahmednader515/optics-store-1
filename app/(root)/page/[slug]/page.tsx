@@ -8,8 +8,10 @@ export async function generateMetadata(props: {
   const params = await props.params
 
   const { slug } = params
+  // Decode the slug to handle Arabic characters properly
+  const decodedSlug = decodeURIComponent(slug)
 
-  const webPage = await getWebPageBySlug(slug)
+  const webPage = await getWebPageBySlug(decodedSlug)
   if (!webPage) {
     return { title: 'Web page not found' }
   }
@@ -24,7 +26,9 @@ export default async function ProductDetailsPage(props: {
 }) {
   const params = await props.params
   const { slug } = params
-  const webPage = await getWebPageBySlug(slug)
+  // Decode the slug to handle Arabic characters properly
+  const decodedSlug = decodeURIComponent(slug)
+  const webPage = await getWebPageBySlug(decodedSlug)
 
   if (!webPage) notFound()
 

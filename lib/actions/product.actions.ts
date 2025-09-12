@@ -381,8 +381,11 @@ export async function getProductsByTag({
 // GET ONE PRODUCT BY SLUG
 export async function getProductBySlug(slug: string) {
   try {
+    // Decode the slug to handle Arabic characters properly
+    const decodedSlug = decodeURIComponent(slug)
+    
     const product = await prisma.product.findFirst({
-      where: { slug, isPublished: true }
+      where: { slug: decodedSlug, isPublished: true }
     })
     if (!product) return null
     return JSON.parse(JSON.stringify(product))

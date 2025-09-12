@@ -221,6 +221,7 @@ const ProductForm = ({
                     <Input 
                       {...field} 
                       className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
+                      placeholder='مثال: نظارات شمسية أزرق'
                       onChange={(e) => {
                         field.onChange(e)
                         // Auto-generate slug when name changes
@@ -245,7 +246,7 @@ const ProductForm = ({
                     <Input 
                       {...field} 
                       className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
-                      placeholder='سيتم إنشاؤه تلقائياً من اسم المنتج'
+                      placeholder='مثال: نظارات-شمسية-أزرق'
                     />
                   </FormControl>
                   <p className='text-sm text-gray-600'>الرابط المستخدم في URL المنتج</p>
