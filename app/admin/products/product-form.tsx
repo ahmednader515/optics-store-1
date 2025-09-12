@@ -66,6 +66,8 @@ const productDefaultValues: IProductInput = {
   price: 0,
   listPrice: 0,
   countInStock: 0,
+  deliveryPrice: 0,
+  deliveryTime: 1,
   numReviews: 0,
   avgRating: 0,
   numSales: 0,
@@ -337,6 +339,50 @@ const ProductForm = ({
                       className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Delivery Fields */}
+          <div className='flex flex-col gap-5 md:flex-row'>
+            <FormField
+              control={form.control}
+              name='deliveryPrice'
+              render={({ field }) => (
+                <FormItem className='w-full'>
+                  <FormLabel className='text-gray-900 font-semibold'>سعر التوصيل</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      step='0.01'
+                      {...field}
+                      className='border-green-300 bg-green-50 text-gray-900 focus:border-green-500 focus:ring-green-500'
+                      placeholder='0.00'
+                    />
+                  </FormControl>
+                  <p className='text-sm text-green-600'>أدخل سعر التوصيل بالجنيه</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='deliveryTime'
+              render={({ field }) => (
+                <FormItem className='w-full'>
+                  <FormLabel className='text-gray-900 font-semibold'>وقت التوصيل (بالأيام)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min='1'
+                      {...field}
+                      className='border-green-300 bg-green-50 text-gray-900 focus:border-green-500 focus:ring-green-500'
+                      placeholder='1'
+                    />
+                  </FormControl>
+                  <p className='text-sm text-green-600'>أدخل عدد الأيام المطلوبة للتوصيل</p>
                   <FormMessage />
                 </FormItem>
               )}

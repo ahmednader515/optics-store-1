@@ -29,7 +29,7 @@ export const ReviewInputSchema = z.object({
 
 export const ProductInputSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
-  slug: z.string().min(3, 'Slug must be at least 3 characters'),
+  slug: z.string().optional(), // Made optional as it will be auto-generated
   category: z.string().min(1, 'Category is required'),
   images: z.array(z.string()).min(1, 'Product must have at least one image'),
   brand: z.string().min(1, 'Brand is required'),
@@ -42,6 +42,14 @@ export const ProductInputSchema = z.object({
     .number()
     .int()
     .nonnegative('count in stock must be a non-negative number'),
+  deliveryPrice: z.coerce
+    .number()
+    .min(0, 'Delivery price must be at least 0')
+    .default(0),
+  deliveryTime: z.coerce
+    .number()
+    .min(1, 'Delivery time must be at least 1 day')
+    .default(1),
   tags: z.array(z.string()).default([]),
   sizes: z.array(z.string()).default([]),
   colors: z.array(z.string()).default([]),

@@ -55,6 +55,8 @@ model Product {
   price                     Decimal     @db.Decimal(10, 2)
   listPrice                 Decimal     @db.Decimal(10, 2)
   countInStock              Int
+  deliveryPrice             Decimal     @db.Decimal(10, 2) @default(0)
+  deliveryTime              Int         @default(1)
   tags                      String[]    @default([])
   colors                    String[]    @default(["White", "Red", "Black"])
   sizes                     String[]    @default(["S", "M", "L"])
