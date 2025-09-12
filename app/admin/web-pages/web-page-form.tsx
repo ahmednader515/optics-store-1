@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
 
 import { z } from 'zod'
 
@@ -29,9 +30,9 @@ import { toSlug } from '@/lib/utils'
 const webPageDefaultValues =
   process.env.NODE_ENV === 'development'
     ? {
-        title: 'Sample Page',
+        title: 'صفحة تجريبية',
         slug: 'sample-page',
-        content: 'Sample Content',
+        content: 'محتوى تجريبي',
       }
     : {
         title: '',
@@ -60,6 +61,15 @@ const WebPageForm = ({
   })
 
   const { toast } = useToast()
+
+  // Auto-update slug when title changes
+  const watchedTitle = form.watch('title')
+  useEffect(() => {
+    if (watchedTitle) {
+      form.setValue('slug', toSlug(watchedTitle))
+    }
+  }, [watchedTitle, form])
+
   async function onSubmit(values: z.infer<typeof WebPageInputSchema>) {
     if (type === 'Create') {
       const res = await createWebPage(values)
@@ -104,9 +114,9 @@ const WebPageForm = ({
             name='title'
             render={({ field }) => (
               <FormItem className='w-full'>
-                <FormLabel>Title</FormLabel>
+                <FormLabel>العنوان</FormLabel>
                 <FormControl>
-                  <Input placeholder='Enter title' {...field} />
+                  <Input placeholder='أدخل العنوان' {...field} />
                 </FormControl>
 
                 <FormMessage />
@@ -119,25 +129,14 @@ const WebPageForm = ({
             name='slug'
             render={({ field }) => (
               <FormItem className='w-full'>
-                <FormLabel>Slug</FormLabel>
+                <FormLabel>الرابط</FormLabel>
 
                 <FormControl>
-                  <div className='relative'>
-                    <Input
-                      placeholder='Enter slug'
-                      className='pl-8'
-                      {...field}
-                    />
-                    <button
-                      type='button'
-                      onClick={() => {
-                        form.setValue('slug', toSlug(form.getValues('title')))
-                      }}
-                      className='absolute right-2 top-2.5'
-                    >
-                      Generate
-                    </button>
-                  </div>
+                  <Input
+                    placeholder='الرابط'
+                    disabled
+                    {...field}
+                  />
                 </FormControl>
 
                 <FormMessage />
@@ -145,23 +144,21 @@ const WebPageForm = ({
             )}
           />
         </div>
-        <div className='flex flex-col gap-5 md:flex-row'>
+        <div>
           <FormField
             control={form.control}
             name='content'
             render={({ field }) => (
               <FormItem className='w-full'>
-                <FormLabel>Content</FormLabel>
+                <FormLabel>المحتوى</FormLabel>
                 <FormControl>
                   <MdEditor
-                    // value={markdown}
                     {...field}
                     style={{ height: '500px' }}
                     renderHTML={(text) => <ReactMarkdown>{text}</ReactMarkdown>}
                     onChange={({ text }) => form.setValue('content', text)}
+                    view={{ menu: true, md: true, html: false }}
                   />
-
-                  {/* <Textarea placeholder='Enter content' {...field} /> */}
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -180,7 +177,7 @@ const WebPageForm = ({
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormLabel>Is Published?</FormLabel>
+                <FormLabel>منشور؟</FormLabel>
               </FormItem>
             )}
           />
@@ -196,7 +193,7 @@ const WebPageForm = ({
             }}
             className='button col-span-2 w-full'
           >
-            {form.formState.isSubmitting ? 'Submitting...' : `${type} Page`}
+            {form.formState.isSubmitting ? 'جاري الإرسال...' : type === 'Create' ? 'إنشاء الصفحة' : 'تحديث الصفحة'}
           </Button>
         </div>
       </div>

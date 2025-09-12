@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Save, Image as ImageIcon, Upload, Truck, Calculator, DollarSign, GripVertical, Settings, MessageCircle, Video, FolderOpen, Package, Percent } from 'lucide-react'
 import data from '@/lib/data'
 import { updateSetting } from '@/lib/actions/setting.actions'
@@ -199,6 +200,7 @@ function SortableCarouselItem({
 }
 
 export default function SettingsForm({ setting }: { setting: any }) {
+  const router = useRouter()
   const [carouselItems, setCarouselItems] = useState<CarouselItem[]>([])
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [deliverySettings, setDeliverySettings] = useState({
@@ -252,6 +254,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
   useEffect(() => {
     const settings = setting || data.settings[0]
     if (settings) {
+      console.log('Loading settings with chatContent:', settings.chatContent)
       setCarouselItems(settings.carousels || [])
       setVideos(settings.videos || [])
       setChatContent(settings.chatContent || {})
@@ -364,6 +367,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
     setIsLoading(true)
     
     try {
+      console.log('Submitting settings with chatContent:', chatContent)
       const newSetting = {
         ...data.settings[0],
         carousels: carouselItems,
@@ -371,6 +375,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
         deliverySettings,
         taxSettings,
         productPricing,
+        chatContent,
       } as any
 
       const res = await updateSetting(newSetting)
@@ -386,6 +391,8 @@ export default function SettingsForm({ setting }: { setting: any }) {
           description: 'تم تحديث إعدادات الموقع بنجاح',
           variant: 'default'
         })
+        // Refresh the data to load updated settings
+        router.refresh()
       }
       
     } catch (error) {

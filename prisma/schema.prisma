@@ -184,6 +184,9 @@ model Setting {
   availableDeliveryDates  Json
   defaultDeliveryDate     String
   chatContent             Json?    @default("{}")
+  deliverySettings        Json?    @default("{}")
+  taxSettings             Json?    @default("{}")
+  productPricing          Json?    @default("{}")
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 

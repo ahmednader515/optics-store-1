@@ -245,11 +245,12 @@ const ProductForm = ({
                   <FormControl>
                     <Input 
                       {...field} 
-                      className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'
+                      disabled
+                      className='border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed'
                       placeholder='مثال: نظارات-شمسية-أزرق'
                     />
                   </FormControl>
-                  <p className='text-sm text-gray-600'>الرابط المستخدم في URL المنتج</p>
+                  <p className='text-sm text-gray-600'>الرابط المستخدم في URL المنتج (يتم إنشاؤه تلقائياً من اسم المنتج)</p>
                   <FormMessage />
                 </FormItem>
               )}
