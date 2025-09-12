@@ -42,10 +42,10 @@ export const ProductInputSchema = z.object({
     .number()
     .int()
     .nonnegative('count in stock must be a non-negative number'),
-  deliveryPrice: z.coerce
-    .number()
-    .min(0, 'Delivery price must be at least 0')
-    .default(0),
+  deliveryPrice: z
+    .string()
+    .min(1, 'Delivery price is required')
+    .default('0'),
   deliveryTime: z.coerce
     .number()
     .min(1, 'Delivery time must be at least 1 day')

@@ -66,7 +66,7 @@ const productDefaultValues: IProductInput = {
   price: 0,
   listPrice: 0,
   countInStock: 0,
-  deliveryPrice: 0,
+  deliveryPrice: '0',
   deliveryTime: 1,
   numReviews: 0,
   avgRating: 0,
@@ -355,14 +355,13 @@ const ProductForm = ({
                   <FormLabel className='text-gray-900 font-semibold'>سعر التوصيل</FormLabel>
                   <FormControl>
                     <Input
-                      type='number'
-                      step='0.01'
+                      type='text'
                       {...field}
                       className='border-green-300 bg-green-50 text-gray-900 focus:border-green-500 focus:ring-green-500'
-                      placeholder='0.00'
+                      placeholder='0.00 أو مجاني'
                     />
                   </FormControl>
-                  <p className='text-sm text-green-600'>أدخل سعر التوصيل بالجنيه</p>
+                  <p className='text-sm text-green-600'>أدخل سعر التوصيل بالجنيه أو اكتب "مجاني"</p>
                   <FormMessage />
                 </FormItem>
               )}
