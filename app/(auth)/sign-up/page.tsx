@@ -16,7 +16,7 @@ export default function SignUpPage() {
         <div className="grid lg:grid-cols-2 gap-8 md:gap-16 lg:gap-32 items-center">
           {/* Logo Section - Right Side */}
           <div className="flex flex-col items-center justify-center space-y-6 md:space-y-8 lg:space-y-10 text-center logo-section order-2 lg:order-1">
-            <div className="w-32 h-32 md:w-48 md:h-48 lg:w-64 lg:h-64 relative" style={{ aspectRatio: '257/133' }}>
+            <div className="w-40 h-40 md:w-56 md:h-56 lg:w-72 lg:h-72 relative" style={{ aspectRatio: '345/253' }}>
               <Image
                 src="/icons/logo.png"
                 alt="شعار المتجر"

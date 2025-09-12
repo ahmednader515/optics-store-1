@@ -60,11 +60,11 @@ export default async function Header() {
                 <Link href="/">
                   <Image
                     src={site.logo}
-                    width={257}
-                    height={133}
+                    width={345}
+                    height={253}
                     alt={`${site.name} logo`}
-                    className="h-8 w-auto sm:h-10 sm:w-auto md:h-12 md:w-auto"
-                    style={{ aspectRatio: '257/133' }}
+                    className="h-10 w-auto sm:h-12 sm:w-auto md:h-16 md:w-auto"
+                    style={{ aspectRatio: '345/253' }}
                   />
                 </Link>
               </div>

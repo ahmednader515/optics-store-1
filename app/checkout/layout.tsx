@@ -20,13 +20,13 @@ export default function CheckoutLayout({
               <Image
                 src='/icons/logo.png'
                 alt='logo'
-                width={257}
-                height={133}
-                className="h-6 w-auto"
+                width={345}
+                height={253}
+                className="h-8 w-auto"
                 style={{
                   maxWidth: '100%',
-                  height: '100px',
-                  aspectRatio: '257/133',
+                  height: '120px',
+                  aspectRatio: '345/253',
                 }}
               />
             </Link>

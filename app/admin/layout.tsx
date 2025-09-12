@@ -43,11 +43,11 @@ export default async function AdminLayout({
             <Link href='/' className='flex items-center'>
               <Image
                 src='/icons/logo.png'
-                width={257}
-                height={133}
+                width={345}
+                height={253}
                 alt={`${site.name} logo`}
-                className='h-10 w-auto sm:h-12 w-auto'
-                style={{ aspectRatio: '257/133' }}
+                className='h-12 w-auto sm:h-14 w-auto'
+                style={{ aspectRatio: '345/253' }}
               />
             </Link>
           </div>
