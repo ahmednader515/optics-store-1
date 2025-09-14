@@ -25,7 +25,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { createProduct, updateProduct, getAllCategories } from '@/lib/actions/product.actions'
+import { createProduct, updateProduct } from '@/lib/actions/product.actions'
+import { getAllCategories } from '@/lib/actions/category.actions'
+import { getSubCategoriesByCategory, getAllSubCategories } from '@/lib/actions/subcategory.actions'
 import { IProductInput } from '@/types'
 import { UploadButton } from '@/lib/uploadthing'
 import { ProductInputSchema, ProductUpdateSchema } from '@/lib/validator'
@@ -60,6 +62,7 @@ const productDefaultValues: IProductInput = {
   name: '',
   slug: '',
   category: '',
+  subcategory: '',
   images: [],
   brand: '',
   description: '',
@@ -93,7 +96,9 @@ const ProductForm = ({
 }) => {
   const router = useRouter()
   const [categories, setCategories] = useState<string[]>([])
+  const [subcategories, setSubcategories] = useState<Array<{name: string, slug: string}>>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false)
   const { isLoading: isSubmitting, withLoading } = useLoading()
 
   const form = useForm<IProductInput>({
@@ -112,8 +117,8 @@ const ProductForm = ({
   const fetchCategories = async () => {
     try {
       setIsLoadingCategories(true)
-              const categoriesData = await getAllCategories()
-        setCategories(categoriesData)
+      const categoriesData = await getAllCategories()
+      setCategories(categoriesData)
     } catch (error) {
       console.error('Error fetching categories:', error)
     } finally {
@@ -121,17 +126,136 @@ const ProductForm = ({
     }
   }
 
+  // Fetch subcategories function
+  const fetchSubcategories = async (categoryName: string) => {
+    if (!categoryName) {
+      setSubcategories([])
+      return
+    }
 
+    try {
+      setIsLoadingSubcategories(true)
+      
+      // Find category ID by name
+      let categoriesData
+      try {
+        categoriesData = await getAllCategories()
+        
+        if (categoriesData === undefined) {
+          setSubcategories([])
+          return
+        }
+        
+        // Check if the data structure is correct
+        if (categoriesData.length > 0 && typeof categoriesData[0] === 'string') {
+          setSubcategories([])
+          return
+        }
+      } catch (error) {
+        console.error('Error calling getAllCategories:', error)
+        setSubcategories([])
+        return
+      }
+      
+      // More robust check
+      if (categoriesData === null || categoriesData === undefined) {
+        setSubcategories([])
+        return
+      }
+      
+      if (!Array.isArray(categoriesData)) {
+        setSubcategories([])
+        return
+      }
+      
+      if (categoriesData.length === 0) {
+        setSubcategories([])
+        return
+      }
+      
+      // Try exact match first - with safe array access
+      let category = categoriesData?.find?.(cat => cat.name === categoryName)
+      
+      // If not found, try trimming whitespace
+      if (!category) {
+        category = categoriesData?.find?.(cat => cat.name.trim() === categoryName.trim())
+      }
+      
+      // If still not found, try case-insensitive match
+      if (!category) {
+        category = categoriesData?.find?.(cat => cat.name.toLowerCase() === categoryName.toLowerCase())
+      }
+      
+      if (category) {
+        const result = await getSubCategoriesByCategory(category.id)
+        
+        if (result.success) {
+          const subcategories = result.data?.map?.(sub => ({ name: sub.name, slug: sub.slug })) || []
+          setSubcategories(subcategories)
+        } else {
+          setSubcategories([])
+        }
+      } else {
+        setSubcategories([])
+      }
+    } catch (error) {
+      console.error('Error fetching subcategories:', error)
+      console.error('Error details:', error)
+      setSubcategories([])
+    } finally {
+      setIsLoadingSubcategories(false)
+    }
+  }
+
+
+
+  // Watch for category changes
+  const selectedCategory = form.watch('category')
 
   // Fetch categories when component mounts
   useEffect(() => {
     fetchCategories()
   }, [type, product, productId])
 
+  // Fetch subcategories when category changes
+  useEffect(() => {
+    if (selectedCategory && selectedCategory !== '__loading__' && selectedCategory !== '__no_categories__') {
+      // Only fetch subcategories if categories are loaded
+      if (categories.length > 0) {
+        fetchSubcategories(selectedCategory)
+      } else {
+        setSubcategories([])
+      }
+    } else {
+      setSubcategories([])
+    }
+  }, [selectedCategory, categories.length, isLoadingCategories])
+
+  // Fetch subcategories for existing product on mount (for edit mode)
+  useEffect(() => {
+    if (product && type === 'Update' && product.category) {
+      if (categories.length > 0) {
+        fetchSubcategories(product.category)
+      }
+    }
+  }, [product, type, categories.length])
+
+  // Set subcategory field when product data is available (for edit mode)
+  useEffect(() => {
+    if (product && type === 'Update' && product.subcategory) {
+      form.setValue('subcategory', product.subcategory)
+    }
+  }, [product, type, form])
+
+
+
 
 
   const { toast } = useToast()
   const onSubmit = async (values: IProductInput) => {
+    console.log('Form values being submitted:', values)
+    console.log('Subcategory value:', values.subcategory)
+    
     // Validate that category is selected
     if (!values.category || values.category === '__loading__' || values.category === '__no_categories__') {
       toast({
@@ -276,8 +400,8 @@ const ProductForm = ({
                           <SelectItem value="__no_categories__" disabled>لا توجد فئات متاحة</SelectItem>
                         ) : (
                           categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
                             </SelectItem>
                           ))
                         )}
@@ -293,6 +417,53 @@ const ProductForm = ({
                       >
                         الذهاب إلى الإعدادات
                       </a>
+                    </div>
+                  )}
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='subcategory'
+              render={({ field }) => (
+                <FormItem className='w-full'>
+                  <FormLabel className='text-gray-900 font-semibold'>الفئة الفرعية</FormLabel>
+                  <FormControl>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value} 
+                      disabled={isLoadingSubcategories || subcategories.length === 0}
+                    >
+                      <SelectTrigger className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'>
+                        <SelectValue placeholder={
+                          isLoadingSubcategories 
+                            ? "جاري التحميل..." 
+                            : subcategories.length === 0 
+                              ? "لا توجد فئات فرعية" 
+                              : "اختر فئة فرعية"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {isLoadingSubcategories ? (
+                          <SelectItem value="__loading__" disabled>جاري التحميل...</SelectItem>
+                        ) : subcategories.length === 0 ? (
+                          <SelectItem value="__no_subcategories__" disabled>لا توجد فئات فرعية متاحة</SelectItem>
+                        ) : (
+                          subcategories.map((subcategory) => (
+                            <SelectItem key={subcategory.slug} value={subcategory.name}>
+                              {subcategory.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  {subcategories.length === 0 && !isLoadingSubcategories && selectedCategory && (
+                    <div className="text-sm text-gray-600 mt-2">
+                      <p>لا توجد فئات فرعية لهذه الفئة.</p>
                     </div>
                   )}
 

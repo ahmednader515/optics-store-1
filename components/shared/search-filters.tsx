@@ -13,18 +13,20 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 interface SearchFiltersProps {
   categories: string[]
+  subcategories: Array<{ name: string; category: string }>
   tags: string[]
   maxPrice: number
 }
 
-export default function SearchFilters({ categories, tags, maxPrice }: SearchFiltersProps) {
+export default function SearchFilters({ categories, subcategories, tags, maxPrice }: SearchFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false) // Closed by default on mobile
   const [priceRange, setPriceRange] = useState([0, maxPrice])
   
   // Get current filter values
   const currentCategory = searchParams.get('category') || ''
+  const currentSubcategory = searchParams.get('subcategory') || ''
   const currentTags = searchParams.getAll('tag')
   const currentMinPrice = searchParams.get('minPrice') || '0'
   const currentMaxPrice = searchParams.get('maxPrice') || maxPrice.toString()
@@ -33,6 +35,7 @@ export default function SearchFilters({ categories, tags, maxPrice }: SearchFilt
   const translations = {
     filters: 'البحث',
     category: 'الفئة',
+    subcategory: 'الفئة الفرعية',
     tags: 'العلامات',
     priceRange: 'نطاق السعر',
     clearAll: 'مسح الكل',
@@ -40,6 +43,7 @@ export default function SearchFilters({ categories, tags, maxPrice }: SearchFilt
     showFilters: 'إظهار البحث',
     hideFilters: 'إخفاء البحث',
     allCategories: 'جميع الفئات',
+    allSubcategories: 'جميع الفئات الفرعية',
     allTags: 'جميع العلامات',
     price: 'السعر',
     egp: 'ج.م',
@@ -74,9 +78,17 @@ export default function SearchFilters({ categories, tags, maxPrice }: SearchFilt
 
   const handleCategoryChange = (category: string) => {
     if (category === currentCategory) {
-      updateFilters({ category: '' })
+      updateFilters({ category: '', subcategory: '' }) // Clear subcategory when category changes
     } else {
-      updateFilters({ category })
+      updateFilters({ category, subcategory: '' }) // Clear subcategory when category changes
+    }
+  }
+
+  const handleSubcategoryChange = (subcategory: string) => {
+    if (subcategory === currentSubcategory) {
+      updateFilters({ subcategory: '' })
+    } else {
+      updateFilters({ subcategory })
     }
   }
 
@@ -100,7 +112,9 @@ export default function SearchFilters({ categories, tags, maxPrice }: SearchFilt
 
   const removeFilter = (key: string, value?: string) => {
     if (key === 'category') {
-      updateFilters({ category: '' })
+      updateFilters({ category: '', subcategory: '' })
+    } else if (key === 'subcategory') {
+      updateFilters({ subcategory: '' })
     } else if (key === 'tag') {
       const newTags = currentTags.filter(t => t !== value)
       updateFilters({ tag: newTags })
@@ -112,6 +126,7 @@ export default function SearchFilters({ categories, tags, maxPrice }: SearchFilt
 
   const activeFilters = [
     ...(currentCategory ? [{ key: 'category', value: currentCategory, label: currentCategory }] : []),
+    ...(currentSubcategory ? [{ key: 'subcategory', value: currentSubcategory, label: currentSubcategory }] : []),
     ...currentTags.map(tag => ({ key: 'tag', value: tag, label: tag })),
     ...(currentMinPrice !== '0' || currentMaxPrice !== maxPrice.toString() ? [{ key: 'price', value: '', label: `${currentMinPrice} - ${currentMaxPrice} ${translations.egp}` }] : [])
   ]
@@ -203,6 +218,41 @@ export default function SearchFilters({ categories, tags, maxPrice }: SearchFilt
               ))}
             </div>
           </div>
+
+          {/* Subcategory Filter */}
+          {subcategories.length > 0 && (
+            <div className="mb-4 sm:mb-6">
+              <Label className="text-sm font-semibold mb-3 sm:mb-4 block text-gray-800">{translations.subcategory}</Label>
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Checkbox
+                    id="all-subcategories"
+                    checked={!currentSubcategory}
+                    onCheckedChange={() => handleSubcategoryChange('')}
+                    className="text-primary"
+                  />
+                  <Label htmlFor="all-subcategories" className="text-xs sm:text-sm text-gray-700 cursor-pointer">
+                    {translations.allSubcategories}
+                  </Label>
+                </div>
+                {subcategories
+                  .filter(sub => !currentCategory || sub.category === currentCategory)
+                  .map((subcategory) => (
+                    <div key={subcategory.name} className="flex items-center space-x-2 space-x-reverse">
+                      <Checkbox
+                        id={subcategory.name}
+                        checked={currentSubcategory === subcategory.name}
+                        onCheckedChange={() => handleSubcategoryChange(subcategory.name)}
+                        className="text-primary"
+                      />
+                      <Label htmlFor={subcategory.name} className="text-xs sm:text-sm text-gray-700 cursor-pointer">
+                        {subcategory.name}
+                      </Label>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           <Separator className="my-4 sm:my-6" />
 

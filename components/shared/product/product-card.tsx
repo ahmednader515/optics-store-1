@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -21,48 +23,101 @@ const ProductCard = ({
   hideBorder?: boolean;
   hideAddToCart?: boolean;
 }) => {
-  const ProductImage = () => (
-    <div className="relative group w-full h-full">
-      <Link href={`/product/${product.slug}`}>
-        <div className="relative h-24 w-24 md:h-48 md:w-full sm:md:h-56 lg:md:h-64 overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center">
-          {product.images.length > 1 ? (
-            <ImageHover
-              src={product.images[0]}
-              hoverSrc={product.images[1]}
-              alt={product.name}
-            />
-          ) : (
-            <Image
-              src={product.images[0]}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 96px, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain transition-transform duration-300 group-hover:scale-105"
-            />
-          )}
-          
-          {/* Quick action buttons overlay - hidden on mobile to save space */}
-          <div className="absolute top-1 left-1 md:top-2 md:left-2 sm:md:top-3 sm:md:left-3 flex flex-col gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex">
-            <button className="p-1 sm:p-1.5 md:p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all duration-200 hover:scale-110">
-              <Eye className="h-2 w-2 sm:h-3 sm:w-3 md:h-4 md:w-4 text-gray-600" />
-            </button>
+  const ProductImage = () => {
+    const [imageError, setImageError] = React.useState(false)
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [retryCount, setRetryCount] = React.useState(0)
+
+    const handleImageError = () => {
+      if (retryCount < 2) {
+        // Retry up to 2 times
+        setRetryCount(prev => prev + 1)
+        setIsLoading(true)
+        // Force re-render by updating the src
+        setTimeout(() => {
+          setIsLoading(false)
+        }, 1000)
+      } else {
+        setImageError(true)
+        setIsLoading(false)
+      }
+    }
+
+    const handleImageLoad = () => {
+      setImageError(false)
+      setIsLoading(false)
+      setRetryCount(0)
+    }
+
+    // Fallback image
+    const fallbackImage = '/images/p11-1.jpg'
+    const currentImageSrc = product.images?.[0] || fallbackImage
+
+    return (
+      <div className="relative group w-full h-full">
+        <Link href={`/product/${product.slug}`}>
+          <div className="relative h-24 w-24 md:h-48 md:w-full sm:md:h-56 lg:md:h-64 overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center">
+            {imageError ? (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                <div className="text-center text-gray-400">
+                  <div className="w-8 h-8 mx-auto mb-2 bg-gray-200 rounded"></div>
+                  <p className="text-xs">لا يمكن تحميل الصورة</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
+                  </div>
+                )}
+                {product.images && product.images.length > 1 ? (
+                  <ImageHover
+                    src={currentImageSrc}
+                    hoverSrc={product.images[1] || fallbackImage}
+                    alt={product.name}
+                    onError={handleImageError}
+                    onLoad={handleImageLoad}
+                  />
+                ) : (
+                  <Image
+                    src={currentImageSrc}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 96px, (max-width: 1200px) 50vw, 33vw"
+                    className="object-contain transition-transform duration-300 group-hover:scale-105"
+                    onError={handleImageError}
+                    onLoad={handleImageLoad}
+                    priority={false}
+                    key={`${currentImageSrc}-${retryCount}`}
+                  />
+                )}
+              </>
+            )}
+            
+            {/* Quick action buttons overlay - hidden on mobile to save space */}
+            <div className="absolute top-1 left-1 md:top-2 md:left-2 sm:md:top-3 sm:md:left-3 flex flex-col gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex">
+              <button className="p-1 sm:p-1.5 md:p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all duration-200 hover:scale-110">
+                <Eye className="h-2 w-2 sm:h-3 sm:w-3 md:h-4 md:w-4 text-gray-600" />
+              </button>
+            </div>
+            
+            {/* Stock status badge - smaller on mobile */}
+            {product.countInStock <= 10 && product.countInStock > 0 && (
+              <Badge variant="destructive" className="absolute top-1 right-1 md:top-2 md:right-2 sm:md:top-3 sm:md:right-3 text-xs scale-75 md:scale-100">
+                آخر {product.countInStock} قطع
+              </Badge>
+            )}
+            {product.countInStock === 0 && (
+              <Badge variant="secondary" className="absolute top-1 right-1 md:top-2 md:right-2 sm:md:top-3 sm:md:right-3 text-xs bg-gray-500 scale-75 md:scale-100">
+                نفذت الكمية
+              </Badge>
+            )}
           </div>
-          
-          {/* Stock status badge - smaller on mobile */}
-          {product.countInStock <= 10 && product.countInStock > 0 && (
-            <Badge variant="destructive" className="absolute top-1 right-1 md:top-2 md:right-2 sm:md:top-3 sm:md:right-3 text-xs scale-75 md:scale-100">
-              آخر {product.countInStock} قطع
-            </Badge>
-          )}
-          {product.countInStock === 0 && (
-            <Badge variant="secondary" className="absolute top-1 right-1 md:top-2 md:right-2 sm:md:top-3 sm:md:right-3 text-xs bg-gray-500 scale-75 md:scale-100">
-              نفذت الكمية
-            </Badge>
-          )}
-        </div>
-      </Link>
-    </div>
-  );
+        </Link>
+      </div>
+    )
+  };
 
   const ProductDetails = () => (
     <div className="flex-1 space-y-2 md:space-y-3 lg:space-y-4 p-2 md:p-3 lg:p-4" dir="rtl">

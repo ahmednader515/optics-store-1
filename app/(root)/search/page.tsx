@@ -11,6 +11,7 @@ interface SearchPageProps {
   searchParams: Promise<{
     q?: string
     category?: string
+    subcategory?: string
     minPrice?: string
     maxPrice?: string
     sort?: string
@@ -71,12 +72,19 @@ async function SearchHeader({ params, translations }: {
   const {
     q = '',
     category = '',
+    subcategory = '',
   } = params
+
+  const displayTitle = q 
+    ? `${translations.searchResults} "${q}"`
+    : subcategory 
+      ? `${translations.productsIn} ${subcategory}`
+      : `${translations.productsIn} ${category}`
 
   return (
     <div className='mb-6 sm:mb-8 bg-white rounded-xl p-4 sm:p-6 shadow-sm'>
       <h1 className='text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 text-right text-gray-800'>
-        {q ? `${translations.searchResults} "${q}"` : `${translations.productsIn} ${category}`}
+        {displayTitle}
       </h1>
       <p className='text-sm sm:text-base text-gray-600 text-right'>
         {translations.found} {translations.loading} {translations.products}
@@ -92,6 +100,7 @@ async function ProductResults({ params, translations }: {
   const {
     q = '',
     category = '',
+    subcategory = '',
     minPrice = '',
     maxPrice = '',
     sort = 'newest',
@@ -112,6 +121,10 @@ async function ProductResults({ params, translations }: {
   
   if (category && category !== 'all') {
     where.category = category
+  }
+  
+  if (subcategory && subcategory !== 'all') {
+    where.subcategory = subcategory
   }
   
   if (tag && tag !== 'all') {
@@ -238,21 +251,40 @@ async function ProductResults({ params, translations }: {
 }
 
 async function SearchFiltersSection({ params }: { params: any }) {
-  // Direct database query for categories
-  const categories = await (prisma as any).product.findMany({
-    where: { isPublished: true },
-    select: { category: true },
-    distinct: ['category'],
-    orderBy: { category: 'asc' }
+  // Fetch categories from Category model (all active categories)
+  const categories = await (prisma as any).category.findMany({
+    where: { isActive: true },
+    select: { name: true },
+    orderBy: { sortOrder: 'asc' }
   })
   
-  const categoryList = categories.map((c: any) => c.category)
+  // Direct database query for subcategories
+  const subcategories = await (prisma as any).subCategory.findMany({
+    where: { isActive: true },
+    select: { 
+      name: true,
+      category: {
+        select: { name: true }
+      }
+    },
+    orderBy: { sortOrder: 'asc' }
+  })
+  
+  const categoryList = categories.map((c: any) => c.name)
+  const subcategoryList = subcategories.map((s: any) => ({
+    name: s.name,
+    category: s.category.name
+  }))
   const tags = ['best-seller', 'featured', 'new-arrival', 'todays-deal', 'sunglasses', 'contact-lenses', 'reading-glasses', 'computer-glasses', 'eye-care']
+
+  console.log('Categories fetched for filters:', categoryList)
+  console.log('Subcategories fetched for filters:', subcategoryList)
 
   return (
     <div className='w-full'>
       <SearchFilters 
         categories={categoryList}
+        subcategories={subcategoryList}
         tags={tags}
         maxPrice={1000}
       />
@@ -265,9 +297,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const {
     q = '',
     category = '',
+    subcategory = '',
   } = params
 
-  if (!q && !category) {
+  if (!q && !category && !subcategory) {
     notFound()
   }
 

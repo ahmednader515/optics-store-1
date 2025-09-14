@@ -18,6 +18,11 @@ import {
   reorderCategories,
   type ICategoryInput 
 } from '@/lib/actions/category.actions'
+import { 
+  getAllSubCategories,
+  type ISubCategoryInput 
+} from '@/lib/actions/subcategory.actions'
+import SubCategoryManager from './subcategory-manager'
 
 interface Category {
   id: string
@@ -29,6 +34,20 @@ interface Category {
   sortOrder: number
   createdAt: string
   updatedAt: string
+  subcategories?: Array<{
+    id: string
+    name: string
+    description?: string
+    slug: string
+    image?: string | null
+    isActive: boolean
+    sortOrder: number
+    categoryId: string
+    category: {
+      name: string
+      slug: string
+    }
+  }>
 }
 
 export default function CategoryManager() {
@@ -36,6 +55,8 @@ export default function CategoryManager() {
   const [isLoading, setIsLoading] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
+  const [activeTab, setActiveTab] = useState<'categories' | 'subcategories'>('categories')
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [newCategory, setNewCategory] = useState<ICategoryInput>({
     name: '',
     description: '',
@@ -255,19 +276,48 @@ export default function CategoryManager() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className='flex items-center justify-between'>
-          <CardTitle className='text-xl flex items-center gap-2'>
-            <GripVertical className='h-5 w-5' />
-            إدارة الفئات
-          </CardTitle>
-          <Button onClick={handleAddNew} size='sm' disabled={isAddingNew}>
-            <Plus className='h-4 w-4 ml-2' />
-            إضافة فئة جديدة
-          </Button>
-        </div>
-      </CardHeader>
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex space-x-2 space-x-reverse border-b overflow-x-auto scrollbar-hide">
+        <button
+          onClick={() => setActiveTab('categories')}
+          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+            activeTab === 'categories'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <span className="hidden sm:inline">الفئات الرئيسية</span>
+          <span className="sm:hidden">الرئيسية</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('subcategories')}
+          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+            activeTab === 'subcategories'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <span className="hidden sm:inline">الفئات الفرعية</span>
+          <span className="sm:hidden">الفرعية</span>
+        </button>
+      </div>
+
+      {/* Categories Tab */}
+      {activeTab === 'categories' && (
+        <Card>
+          <CardHeader>
+            <div className='flex items-center justify-between'>
+              <CardTitle className='text-xl flex items-center gap-2'>
+                <GripVertical className='h-5 w-5' />
+                إدارة الفئات الرئيسية
+              </CardTitle>
+              <Button onClick={handleAddNew} size='sm' disabled={isAddingNew}>
+                <Plus className='h-4 w-4 ml-2' />
+                إضافة فئة جديدة
+              </Button>
+            </div>
+          </CardHeader>
       <CardContent className='space-y-6'>
         {/* Add New Category Form */}
         {isAddingNew && (
@@ -531,5 +581,61 @@ export default function CategoryManager() {
         </div>
       </CardContent>
     </Card>
+      )}
+
+      {/* Subcategories Tab */}
+      {activeTab === 'subcategories' && (
+        <div className="space-y-4">
+          {categories.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-500">لا توجد فئات رئيسية. يرجى إضافة فئة رئيسية أولاً.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>اختر الفئة الرئيسية لإدارة فئاتها الفرعية</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categories.map((category) => (
+                      <Button
+                        key={category.id}
+                        variant={selectedCategoryId === category.id ? "default" : "outline"}
+                        onClick={() => setSelectedCategoryId(category.id)}
+                        className="h-auto p-4 flex flex-col items-center space-y-2"
+                      >
+                        {category.image && (
+                          <img
+                            src={category.image}
+                            alt={category.name}
+                            className="w-12 h-12 object-cover rounded-full"
+                          />
+                        )}
+                        <span className="font-medium">{category.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {category.subcategories?.length || 0} فئة فرعية
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {selectedCategoryId && (
+                <SubCategoryManager
+                  subcategories={categories.find(c => c.id === selectedCategoryId)?.subcategories || []}
+                  categoryId={selectedCategoryId}
+                  categoryName={categories.find(c => c.id === selectedCategoryId)?.name || ''}
+                  onSubCategoriesChange={loadCategories}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }

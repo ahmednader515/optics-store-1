@@ -421,19 +421,20 @@ export default function SettingsForm({ setting }: { setting: any }) {
       {/* Tab Navigation */}
       <Card>
         <CardContent className='p-0'>
-          <div className='flex space-x-1 bg-gray-100 p-1 rounded-lg'>
+          <div className='flex space-x-1 bg-gray-100 p-1 rounded-lg overflow-x-auto scrollbar-hide'>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3 py-3 rounded-md text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id 
                     ? 'bg-white text-gray-900 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 {tab.icon}
-                {tab.label}
+                <span className='hidden sm:inline'>{tab.label}</span>
+                <span className='sm:hidden'>{tab.label.split(' ')[0]}</span>
               </button>
             ))}
           </div>

@@ -190,11 +190,24 @@ export async function deleteCategory(id: string) {
 // GET ALL CATEGORIES
 export async function getAllCategories() {
   try {
+    // Check if prisma is available
+    if (!prisma) {
+      console.error('Prisma client is not available')
+      return []
+    }
+    
     const categories = await prisma.category.findMany({
+      include: {
+        subcategories: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' }
+        }
+      },
       orderBy: { sortOrder: 'asc' }
     })
     
-    return categories
+    // Ensure we always return an array
+    return Array.isArray(categories) ? categories : []
   } catch (error) {
     console.error('Error getting categories:', error)
     return []
@@ -206,6 +219,12 @@ export async function getActiveCategories() {
   try {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
+      include: {
+        subcategories: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' }
+        }
+      },
       orderBy: { sortOrder: 'asc' }
     })
     

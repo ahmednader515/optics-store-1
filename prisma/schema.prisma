@@ -1,28 +1,28 @@
 generator client {
-  provider = "prisma-client-js"
-  engineType = "binary"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  engineType    = "binary"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model User {
-  id            String       @id @default(cuid())
-  phone         String       @unique
-  email         String?      @unique
-  name          String
-  role          String       @default("User")
-  password      String?
-  image         String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  orders        Order[]
-  reviews       Review[]
-  address       UserAddress?
+  id        String       @id @default(cuid())
+  name      String
+  role      String       @default("User")
+  password  String?
+  image     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  phone     String       @unique
+  email     String?      @unique
+  orders    Order[]
+  reviews   Review[]
+  address   UserAddress?
 
   @@map("users")
 }
@@ -45,49 +45,68 @@ model UserAddress {
 }
 
 model Product {
-  id                        String      @id @default(cuid())
-  name                      String
-  slug                      String      @unique
-  category                  String
-  images                    String[]
-  brand                     String
-  description               String
-  price                     Decimal     @db.Decimal(10, 2)
-  listPrice                 Decimal     @db.Decimal(10, 2)
-  countInStock              Int
-  deliveryPrice             Decimal     @db.Decimal(10, 2) @default(0)
-  deliveryTime              Int         @default(1)
-  tags                      String[]    @default([])
-  colors                    String[]    @default(["White", "Red", "Black"])
-  sizes                     String[]    @default(["S", "M", "L"])
-  lensSizes                 String[]    @default([])
-  glassesShape              String?
-  requiresMedicalCertificate Boolean    @default(false)
-  avgRating                 Float       @default(0)
-  numReviews                Int         @default(0)
-  ratingDistribution        Json?
-  numSales                  Int         @default(0)
-  isPublished               Boolean     @default(false)
-  createdAt                 DateTime    @default(now())
-  updatedAt                 DateTime    @updatedAt
-  orderItems                OrderItem[]
-  reviews                   Review[]
+  id                         String      @id @default(cuid())
+  name                       String
+  slug                       String      @unique
+  category                   String
+  images                     String[]
+  brand                      String
+  description                String
+  price                      Decimal     @db.Decimal(10, 2)
+  listPrice                  Decimal     @db.Decimal(10, 2)
+  countInStock               Int
+  tags                       String[]    @default([])
+  colors                     String[]    @default(["White", "Red", "Black"])
+  sizes                      String[]    @default(["S", "M", "L"])
+  avgRating                  Float       @default(0)
+  numReviews                 Int         @default(0)
+  ratingDistribution         Json?
+  numSales                   Int         @default(0)
+  isPublished                Boolean     @default(false)
+  createdAt                  DateTime    @default(now())
+  updatedAt                  DateTime    @updatedAt
+  lensSizes                  String[]    @default([])
+  glassesShape               String?
+  requiresMedicalCertificate Boolean     @default(false)
+  deliveryPrice              Decimal     @default(0) @db.Decimal(10, 2)
+  deliveryTime               Int         @default(1)
+  subcategory                String?
+  orderItems                 OrderItem[]
+  reviews                    Review[]
 
   @@map("products")
 }
 
 model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  description   String?
+  slug          String        @unique
+  isActive      Boolean       @default(true)
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  image         String?
+  subcategories SubCategory[]
+
+  @@map("categories")
+}
+
+model SubCategory {
   id          String   @id @default(cuid())
-  name        String   @unique
+  name        String
   description String?
-  slug        String   @unique
+  slug        String
   image       String?
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
+  categoryId  String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  @@map("categories")
+  @@unique([categoryId, slug])
+  @@map("subcategories")
 }
 
 model Review {
@@ -107,25 +126,25 @@ model Review {
 }
 
 model Order {
-  id                     String                @id @default(cuid())
-  userId                 String
-  expectedDeliveryDate   DateTime
-  paymentMethod          String
-  paymentResult          Json?
-  itemsPrice             Decimal               @db.Decimal(10, 2)
-  shippingPrice          Decimal               @db.Decimal(10, 2)
-  taxPrice               Decimal               @db.Decimal(10, 2)
-  totalPrice             Decimal               @db.Decimal(10, 2)
+  id                      String                @id @default(cuid())
+  userId                  String
+  expectedDeliveryDate    DateTime
+  paymentMethod           String
+  paymentResult           Json?
+  itemsPrice              Decimal               @db.Decimal(10, 2)
+  shippingPrice           Decimal               @db.Decimal(10, 2)
+  taxPrice                Decimal               @db.Decimal(10, 2)
+  totalPrice              Decimal               @db.Decimal(10, 2)
+  isPaid                  Boolean               @default(false)
+  paidAt                  DateTime?
+  isDelivered             Boolean               @default(false)
+  deliveredAt             DateTime?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
   medicalCertificateImage String?
-  isPaid                 Boolean               @default(false)
-  paidAt                 DateTime?
-  isDelivered            Boolean               @default(false)
-  deliveredAt            DateTime?
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime              @updatedAt
-  orderItems             OrderItem[]
-  shippingAddress        OrderShippingAddress?
-  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems              OrderItem[]
+  shippingAddress         OrderShippingAddress?
+  user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("orders")
 }
@@ -153,18 +172,18 @@ model OrderItem {
 }
 
 model OrderShippingAddress {
-  id         String   @id @default(cuid())
-  orderId    String   @unique
-  street     String   // العنوان (الشارع, الشقة, الجناح, الوحدة, الخ)
-  province   String   // المحافظة
-  area       String   // المنطقة
-  apartment  String?  // شقة
-  building   String?  // المبني
-  floor      String?  // طابق
-  landmark   String?  // علامة
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  street    String
+  province  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  apartment String?
+  area      String
+  building  String?
+  floor     String?
+  landmark  String?
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_shipping_addresses")
 }
@@ -174,7 +193,6 @@ model Setting {
   common                  Json
   site                    Json
   carousels               Json
-  videos                  Json?    @default("[]")
   availableLanguages      Json
   defaultLanguage         String
   availableCurrencies     Json
@@ -183,12 +201,13 @@ model Setting {
   defaultPaymentMethod    String
   availableDeliveryDates  Json
   defaultDeliveryDate     String
-  chatContent             Json?    @default("{}")
-  deliverySettings        Json?    @default("{}")
-  taxSettings             Json?    @default("{}")
-  productPricing          Json?    @default("{}")
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
+  videos                  Json?    @default("[]")
+  chatContent             Json?    @default("{}")
+  deliverySettings        Json?    @default("{}")
+  productPricing          Json?    @default("{}")
+  taxSettings             Json?    @default("{}")
 
   @@map("settings")
 }

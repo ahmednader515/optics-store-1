@@ -48,8 +48,18 @@ function ProductSliderSkeleton({ title }: { title: string }) {
   )
 }
 
+
 // Async components for progressive loading
-async function CategoriesSection({ categories }: { categories: Array<{ name: string; image: string | null; slug: string }> }) {
+async function CategoriesSection({ categories }: { categories: Array<{ 
+  name: string; 
+  image: string | null; 
+  slug: string;
+  subcategories: Array<{
+    name: string;
+    slug: string;
+    image: string | null;
+  }>;
+}> }) {
   const sampleImages = [
     '/images/shoes.jpg', '/images/t-shirts.jpg', '/images/wrist-watches.jpg',
     '/images/jeans.jpg', '/images/p11-1.jpg', '/images/p12-1.jpg'
@@ -62,48 +72,50 @@ async function CategoriesSection({ categories }: { categories: Array<{ name: str
         {/* Mobile: Horizontal scrollable row */}
         <div className='flex gap-4 overflow-x-auto pb-2 md:hidden scrollbar-hide'>
           {categories.map((category, index: number) => (
-            <Link
-              key={category.name}
-              href={`/search?category=${category.name}`}
-              className='flex flex-col items-center group flex-shrink-0'
-            >
-              <div className='relative overflow-hidden rounded-full bg-gray-50 mb-2 w-16 h-16 flex items-center justify-center shadow-sm border-2 border-gray-100'>
-                <Image
-                  src={category.image || sampleImages[index % sampleImages.length]}
-                  alt={category.name}
-                  width={64}
-                  height={64}
-                  className='object-cover rounded-full transition-transform duration-300 group-hover:scale-105'
-                />
-              </div>
-              <p className='text-center text-xs text-gray-700 group-hover:text-orange-600 transition-colors duration-200 whitespace-nowrap'>
-                {category.name}
-              </p>
-            </Link>
+            <div key={category.name} className='flex flex-col items-center group flex-shrink-0'>
+              <Link
+                href={`/search?category=${category.name}`}
+                className='flex flex-col items-center group'
+              >
+                <div className='relative overflow-hidden rounded-full bg-gray-50 mb-2 w-16 h-16 flex items-center justify-center shadow-sm border-2 border-gray-100'>
+                  <Image
+                    src={category.image || sampleImages[index % sampleImages.length]}
+                    alt={category.name}
+                    width={64}
+                    height={64}
+                    className='object-cover rounded-full transition-transform duration-300 group-hover:scale-105'
+                  />
+                </div>
+                <p className='text-center text-xs text-gray-700 group-hover:text-orange-600 transition-colors duration-200 whitespace-nowrap'>
+                  {category.name}
+                </p>
+              </Link>
+            </div>
           ))}
         </div>
         
         {/* Desktop: Grid layout */}
         <div className='hidden md:grid grid-cols-4 lg:grid-cols-6 gap-4'>
           {categories.map((category, index: number) => (
-            <Link
-              key={category.name}
-              href={`/search?category=${category.name}`}
-              className='flex flex-col items-center group'
-            >
-              <div className='relative overflow-hidden rounded-full bg-gray-50 mb-3 w-20 h-20 flex items-center justify-center shadow-sm border-2 border-gray-100'>
-                <Image
-                  src={category.image || sampleImages[index % sampleImages.length]}
-                  alt={category.name}
-                  width={80}
-                  height={80}
-                  className='object-cover rounded-full transition-transform duration-300 group-hover:scale-105'
-                />
-              </div>
-              <p className='text-center text-sm text-gray-700 group-hover:text-orange-600 transition-colors duration-200'>
-                {category.name}
-              </p>
-            </Link>
+            <div key={category.name} className='flex flex-col items-center group'>
+              <Link
+                href={`/search?category=${category.name}`}
+                className='flex flex-col items-center group'
+              >
+                <div className='relative overflow-hidden rounded-full bg-gray-50 mb-3 w-20 h-20 flex items-center justify-center shadow-sm border-2 border-gray-100'>
+                  <Image
+                    src={category.image || sampleImages[index % sampleImages.length]}
+                    alt={category.name}
+                    width={80}
+                    height={80}
+                    className='object-cover rounded-full transition-transform duration-300 group-hover:scale-105'
+                  />
+                </div>
+                <p className='text-center text-sm text-gray-700 group-hover:text-orange-600 transition-colors duration-200'>
+                  {category.name}
+                </p>
+              </Link>
+            </div>
           ))}
         </div>
       </CardContent>
@@ -179,13 +191,22 @@ async function CategoryProductsSection({ categories }: { categories: string[] })
 }
 
 export default async function HomePage() {
-  // Fetch categories with images from Category model
+  // Fetch categories with images and subcategories from Category model
   const categories = await prisma.category.findMany({
     where: { isActive: true },
     select: { 
       name: true, 
       image: true,
-      slug: true 
+      slug: true,
+      subcategories: {
+        where: { isActive: true },
+        select: {
+          name: true,
+          slug: true,
+          image: true
+        },
+        orderBy: { sortOrder: 'asc' }
+      }
     },
     orderBy: { sortOrder: 'asc' }
   })

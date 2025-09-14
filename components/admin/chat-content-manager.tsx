@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Plus, Trash2, Save, Eye, Monitor, Sun, BookOpen, Heart, Zap } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
+import { getAllCategories } from '@/lib/actions/category.actions'
 
 interface ChatQuestion {
   id: string
@@ -51,106 +52,105 @@ const iconOptions = [
   { value: 'Eye', label: 'Eye', icon: <Eye className="w-4 h-4" /> },
 ]
 
-const scoreCategories = ['computer', 'reading', 'sunglasses', 'medical', 'contact', 'care']
+// Dynamic categories will be loaded from database
 
-const defaultChatContent: ChatContent = {
-  welcomeMessage: 'مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!',
-  questions: [
-    {
-      id: 'usage',
-      question: 'ما هو الاستخدام الأساسي الذي تبحث عنه؟',
-      options: [
-        {
-          id: 'computer',
-          text: 'العمل على الكمبيوتر',
-          icon: 'Monitor',
-          score: { computer: 3, reading: 2, medical: 1, sunglasses: 0, contact: 1, care: 0 }
-        },
-        {
-          id: 'reading',
-          text: 'القراءة والدراسة',
-          icon: 'BookOpen',
-          score: { reading: 3, medical: 2, computer: 1, sunglasses: 0, contact: 1, care: 0 }
-        },
-        {
-          id: 'outdoor',
-          text: 'الأنشطة الخارجية',
-          icon: 'Sun',
-          score: { sunglasses: 3, contact: 2, medical: 1, computer: 0, reading: 0, care: 1 }
-        },
-        {
-          id: 'vision',
-          text: 'تحسين الرؤية العامة',
-          icon: 'Eye',
-          score: { medical: 3, contact: 2, reading: 1, computer: 1, sunglasses: 0, care: 1 }
-        }
-      ]
-    }
-  ],
-  results: {
-    computer: {
-      category: 'نظارات الكمبيوتر',
-      title: 'النظارات المناسبة للكمبيوتر',
-      description: 'نظارات مخصصة للعمل على الكمبيوتر مع حماية من الضوء الأزرق وعدسة مريحة للعين.',
-      icon: 'Monitor',
-      color: 'bg-blue-500',
-      url: '/search?category=نظارات الكمبيوتر'
-    },
-    reading: {
-      category: 'نظارات القراءة',
-      title: 'النظارات المناسبة للقراءة',
-      description: 'نظارات مريحة للقراءة والدراسة مع عدسة واضحة ومريحة للعين.',
-      icon: 'BookOpen',
-      color: 'bg-green-500',
-      url: '/search?category=نظارات القراءة'
-    },
-    sunglasses: {
-      category: 'النظارات الشمسية',
-      title: 'النظارات الشمسية المناسبة لك',
-      description: 'نظارات شمسية عالية الجودة مع حماية من الأشعة فوق البنفسجية وأناقة عالية.',
-      icon: 'Sun',
-      color: 'bg-yellow-500',
-      url: '/search?category=النظارات الشمسية'
-    },
-    medical: {
-      category: 'النظارات الطبية',
-      title: 'النظارات الطبية المناسبة لك',
-      description: 'نظارات طبية عالية الجودة مع عدسة مخصصة لتحسين الرؤية، مصنوعة من مواد متينة ومريحة.',
-      icon: 'Eye',
-      color: 'bg-purple-500',
-      url: '/search?category=النظارات الطبية'
-    },
-    contact: {
-      category: 'العدسة اللاصقة',
-      title: 'العدسة اللاصقة المثالية لك',
-      description: 'عدسة لاصقة مريحة وآمنة مع تقنيات متقدمة للرطوبة والوضوح، مثالية للنشاط والحركة.',
-      icon: 'Heart',
-      color: 'bg-pink-500',
-      url: '/search?category=العدسة اللاصقة'
-    },
-    care: {
-      category: 'مستلزمات العناية',
-      title: 'منتجات العناية بالعين المناسبة لك',
-      description: 'منتجات عالية الجودة للعناية بالعين والنظارات، لضمان النظافة والراحة المثلى.',
-      icon: 'Heart',
-      color: 'bg-indigo-500',
-      url: '/search?category=مستلزمات العناية'
-    }
+const createDefaultChatContent = (categories: Array<{ name: string; slug: string }>): ChatContent => {
+  // Create score object with current categories
+  const createScoreObject = (scores: { [key: string]: number }) => {
+    const scoreObject: { [key: string]: number } = {}
+    categories.forEach(cat => {
+      scoreObject[cat.slug] = scores[cat.slug] || 0
+    })
+    return scoreObject
+  }
+
+  return {
+    welcomeMessage: 'مرحباً! أنا مساعدك الذكي لاختيار النظارات المناسبة. سأساعدك في العثور على أفضل النظارات بناءً على احتياجاتك. دعنا نبدأ!',
+    questions: [
+      {
+        id: 'usage',
+        question: 'ما هو الاستخدام الأساسي الذي تبحث عنه؟',
+        options: [
+          {
+            id: 'computer',
+            text: 'العمل على الكمبيوتر',
+            icon: 'Monitor',
+            score: createScoreObject({ computer: 3, reading: 2, medical: 1, sunglasses: 0, contact: 1, care: 0 })
+          },
+          {
+            id: 'reading',
+            text: 'القراءة والدراسة',
+            icon: 'BookOpen',
+            score: createScoreObject({ reading: 3, medical: 2, computer: 1, sunglasses: 0, contact: 1, care: 0 })
+          },
+          {
+            id: 'outdoor',
+            text: 'الأنشطة الخارجية',
+            icon: 'Sun',
+            score: createScoreObject({ sunglasses: 3, contact: 2, medical: 1, computer: 0, reading: 0, care: 1 })
+          },
+          {
+            id: 'vision',
+            text: 'تحسين الرؤية العامة',
+            icon: 'Eye',
+            score: createScoreObject({ medical: 3, contact: 2, reading: 1, computer: 1, sunglasses: 0, care: 1 })
+          }
+        ]
+      }
+    ],
+    results: categories.reduce((acc, category, index) => {
+      const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500']
+      const icons = ['Monitor', 'BookOpen', 'Sun', 'Eye', 'Heart', 'Zap']
+      
+      acc[category.slug] = {
+        category: category.name,
+        title: `${category.name} المناسبة لك`,
+        description: `منتجات عالية الجودة من فئة ${category.name} مع أفضل التقنيات والمواد.`,
+        icon: icons[index % icons.length],
+        color: colors[index % colors.length],
+        url: `/search?category=${encodeURIComponent(category.name)}`
+      }
+      return acc
+    }, {} as { [key: string]: ChatResult })
   }
 }
 
 export default function ChatContentManager({ chatContent, onSave }: ChatContentManagerProps) {
+  const [categories, setCategories] = useState<Array<{ name: string; slug: string }>>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [content, setContent] = useState<ChatContent>(() => {
     if (chatContent && chatContent.questions && chatContent.results) {
       return chatContent
     }
-    return defaultChatContent
+    return createDefaultChatContent([]) // Will be updated when categories load
   })
   const [activeTab, setActiveTab] = useState<'welcome' | 'questions' | 'results'>('welcome')
 
   useEffect(() => {
-    setContent(chatContent || defaultChatContent)
-  }, [chatContent])
+    setContent(chatContent || createDefaultChatContent(categories))
+  }, [chatContent, categories])
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true)
+        const dbCategories = await getAllCategories()
+        setCategories(dbCategories.map(cat => ({
+          name: cat.name,
+          slug: cat.slug
+        })))
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+        // Fallback to empty array if fetch fails
+        setCategories([])
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const handleSave = () => {
     onSave(content)
@@ -189,11 +189,17 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
   }
 
   const addOption = (questionIndex: number) => {
+    // Create score object with current categories
+    const scoreObject: { [key: string]: number } = {}
+    categories.forEach(cat => {
+      scoreObject[cat.slug] = 0
+    })
+    
     const newOption: ChatOption = {
       id: `option-${Date.now()}`,
       text: 'خيار جديد',
       icon: 'Heart',
-      score: { computer: 0, reading: 0, sunglasses: 0, medical: 0, contact: 0, care: 0 }
+      score: scoreObject
     }
     setContent(prev => ({
       ...prev,
@@ -248,12 +254,12 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
   const addResult = () => {
     const newKey = `result-${Date.now()}`
     const newResult: ChatResult = {
-      category: 'فئة جديدة',
+      category: categories.length > 0 ? categories[0].name : 'فئة جديدة',
       title: 'عنوان جديد',
       description: 'وصف جديد',
       icon: 'Heart',
       color: 'bg-gray-500',
-      url: '/search?category=فئة-جديدة'
+      url: categories.length > 0 ? `/search?category=${encodeURIComponent(categories[0].name)}` : '/search?category=فئة-جديدة'
     }
     setContent(prev => ({
       ...prev,
@@ -438,27 +444,31 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
 
                       <div>
                         <Label>النقاط (Scores)</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                          {scoreCategories.map(category => (
-                            <div key={category} className="flex items-center space-x-2">
-                              <Label htmlFor={`score-${questionIndex}-${optionIndex}-${category}`} className="text-xs">
-                                {category}
-                              </Label>
-                              <Input
-                                id={`score-${questionIndex}-${optionIndex}-${category}`}
-                                type="number"
-                                min="0"
-                                max="3"
-                                value={option.score[category] || 0}
-                                onChange={(e) => updateOption(questionIndex, optionIndex, 'score', {
-                                  ...option.score,
-                                  [category]: parseInt(e.target.value) || 0
-                                })}
-                                className="w-16 h-8 text-xs"
-                              />
-                            </div>
-                          ))}
-                        </div>
+                        {isLoadingCategories ? (
+                          <div className="text-sm text-gray-500 mt-2">جاري تحميل الفئات...</div>
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                            {categories.map(category => (
+                              <div key={category.slug} className="flex items-center space-x-2">
+                                <Label htmlFor={`score-${questionIndex}-${optionIndex}-${category.slug}`} className="text-xs">
+                                  {category.name}
+                                </Label>
+                                <Input
+                                  id={`score-${questionIndex}-${optionIndex}-${category.slug}`}
+                                  type="number"
+                                  min="0"
+                                  max="3"
+                                  value={option.score[category.slug] || 0}
+                                  onChange={(e) => updateOption(questionIndex, optionIndex, 'score', {
+                                    ...option.score,
+                                    [category.slug]: parseInt(e.target.value) || 0
+                                  })}
+                                  className="w-16 h-8 text-xs"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
