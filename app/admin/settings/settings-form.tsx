@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -242,6 +242,11 @@ export default function SettingsForm({ setting }: { setting: any }) {
     results: {}
   })
   const [activeTab, setActiveTab] = useState('carousel')
+
+  // Memoized callback for chat content changes
+  const handleChatContentChange = useCallback((newChatContent: any) => {
+    setChatContent(newChatContent)
+  }, [])
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -790,9 +795,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
             <CardContent>
               <ChatContentManager
                 chatContent={chatContent}
-                onSave={(newChatContent) => {
-                  setChatContent(newChatContent)
-                }}
+                onSave={handleChatContentChange}
               />
             </CardContent>
           </Card>

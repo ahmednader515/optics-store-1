@@ -240,12 +240,12 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     })
   }
 
-  // Auto-save when content changes
+  // Update parent component when content changes (without triggering save)
   useEffect(() => {
     if (content && Object.keys(content).length > 0) {
       onSave(content)
     }
-  }, [content, onSave])
+  }, [content]) // Remove onSave from dependencies to prevent infinite loop
 
   // Auto-scroll functions
   const scrollToElement = (element: HTMLElement | null) => {
