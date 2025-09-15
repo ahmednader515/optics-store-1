@@ -1,7 +1,7 @@
 import HomeCarousel from '@/components/shared/home/home-carousel'
 import VideoSection from '@/components/shared/home/video-section'
 import ProductSlider from '@/components/shared/product/product-slider'
-import GlassesChat from '@/components/shared/chat/glasses-chat'
+import EnhancedGlassesChat from '@/components/shared/chat/enhanced-glasses-chat'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -266,8 +266,8 @@ export default async function HomePage() {
         </Suspense>
       </div>
       
-      {/* Chat Component */}
-      <GlassesChat chatContent={setting?.chatContent as any} />
+      {/* Enhanced Chat Component */}
+      <EnhancedGlassesChat chatContent={setting?.chatContent as any} />
     </div>
   )
 }

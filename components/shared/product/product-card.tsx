@@ -11,6 +11,9 @@ import { formatNumber, generateId, round2 } from "@/lib/utils";
 import ProductPrice from "./product-price";
 import ImageHover from "./image-hover";
 import { Eye } from "lucide-react";
+import useCartStore from "@/hooks/use-cart-store";
+import { useToast } from "@/hooks/use-toast";
+import { useLoading } from "@/hooks/use-loading";
 
 const ProductCard = ({
   product,
@@ -23,6 +26,7 @@ const ProductCard = ({
   hideBorder?: boolean;
   hideAddToCart?: boolean;
 }) => {
+  const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const ProductImage = () => {
     const [imageError, setImageError] = React.useState(false)
     const [isLoading, setIsLoading] = React.useState(true)
@@ -162,17 +166,125 @@ const ProductCard = ({
     </div>
   );
 
-  const AddButton = () => (
-    <div className="p-2 md:p-3 lg:p-4 pt-0">
-      <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-1.5 md:py-2 lg:py-2.5 rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm lg:text-base">
-        <svg className="w-2 h-2 md:w-3 md:h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
-        </svg>
-        <span className="hidden sm:inline">إضافة للسلة</span>
-        <span className="sm:hidden">إضافة</span>
-      </button>
-    </div>
-  );
+  const ColorSelector = () => {
+    // Only show color selector if there are multiple colors
+    if (!product.colors || product.colors.length <= 1) {
+      return null;
+    }
+
+    return (
+      <div className="p-2 md:p-3 lg:p-4 pb-0">
+        <div className="space-y-2">
+          <label className="text-xs md:text-sm font-medium text-gray-700">اللون:</label>
+          <div className="flex flex-wrap gap-1 md:gap-2">
+            {product.colors.map((color) => (
+              <button
+                key={color}
+                onClick={() => setSelectedColor(color)}
+                className={`px-2 py-1 text-xs md:text-sm border rounded transition-colors duration-200 ${
+                  selectedColor === color 
+                    ? 'border-primary bg-primary text-white' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                {color}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const AddButton = () => {
+    const { addItem } = useCartStore();
+    const { toast } = useToast();
+    const { isLoading: isAddingToCart, withLoading } = useLoading();
+
+    const handleAddToCart = async () => {
+      // Check if product is out of stock
+      if (product.countInStock === 0) {
+        toast({
+          title: 'نفذت الكمية',
+          description: 'هذا المنتج غير متوفر حالياً',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Check if color selection is required
+      if (product.colors && product.colors.length > 1 && !selectedColor) {
+        toast({
+          title: 'يرجى اختيار اللون',
+          description: 'اختر لون المنتج قبل الإضافة إلى السلة',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      await withLoading(async () => {
+        try {
+          await addItem({
+            product: product.id,
+            name: product.name,
+            slug: product.slug,
+            category: product.category,
+            image: product.images?.[0] || '/images/p11-1.jpg',
+            price: Number(product.price),
+            countInStock: product.countInStock,
+            color: selectedColor || product.colors?.[0] || '',
+            size: product.sizes?.[0] || '',
+            lensSize: product.lensSizes?.[0] || '',
+            quantity: 1,
+            clientId: `${product.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            requiresMedicalCertificate: product.requiresMedicalCertificate || false,
+          }, 1);
+
+          toast({
+            title: 'تمت الإضافة إلى السلة',
+            description: `تم إضافة ${product.name} إلى سلة التسوق الخاصة بك`,
+            variant: 'default',
+          });
+        } catch (error: any) {
+          toast({
+            title: 'خطأ في الإضافة',
+            description: error.message || 'حدث خطأ أثناء إضافة المنتج إلى السلة',
+            variant: 'destructive',
+          });
+        }
+      });
+    };
+
+    return (
+      <div className="p-2 md:p-3 lg:p-4 pt-0">
+        <button 
+          onClick={handleAddToCart}
+          disabled={isAddingToCart || product.countInStock === 0}
+          className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-primary-foreground font-medium py-1.5 md:py-2 lg:py-2.5 rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm lg:text-base"
+        >
+          {isAddingToCart ? (
+            <>
+              <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white"></div>
+              <span className="hidden sm:inline">جاري الإضافة...</span>
+              <span className="sm:hidden">جاري...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-2 h-2 md:w-3 md:h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+              </svg>
+              <span className="hidden sm:inline">
+                {product.countInStock === 0 ? 'نفذت الكمية' : 'إضافة للسلة'}
+              </span>
+              <span className="sm:hidden">
+                {product.countInStock === 0 ? 'نفذت' : 'إضافة'}
+              </span>
+            </>
+          )}
+        </button>
+      </div>
+    );
+  };
 
   if (hideBorder) {
     return (
@@ -192,9 +304,10 @@ const ProductCard = ({
           )}
         </div>
         
-        {/* Add to cart button - full width below on mobile */}
+        {/* Color selector and Add to cart button - full width below on mobile */}
         {!hideDetails && !hideAddToCart && (
           <div className="order-3">
+            <ColorSelector />
             <AddButton />
           </div>
         )}
@@ -219,9 +332,10 @@ const ProductCard = ({
         )}
       </div>
       
-      {/* Add to cart button - full width below on mobile */}
+      {/* Color selector and Add to cart button - full width below on mobile */}
       {!hideDetails && !hideAddToCart && (
         <div className="order-3">
+          <ColorSelector />
           <AddButton />
         </div>
       )}

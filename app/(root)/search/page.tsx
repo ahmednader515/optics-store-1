@@ -101,11 +101,8 @@ async function ProductResults({ params, translations }: {
     q = '',
     category = '',
     subcategory = '',
-    minPrice = '',
-    maxPrice = '',
     sort = 'newest',
     page = '1',
-    tag = '',
   } = params
 
   const currentPage = parseInt(page)
@@ -127,20 +124,7 @@ async function ProductResults({ params, translations }: {
     where.subcategory = subcategory
   }
   
-  if (tag && tag !== 'all') {
-    if (Array.isArray(tag)) {
-      where.tags = { hasSome: tag }
-    } else {
-      where.tags = { has: tag }
-    }
-  }
   
-  if (minPrice && maxPrice) {
-    where.price = { 
-      gte: parseFloat(minPrice), 
-      lte: parseFloat(maxPrice) 
-    }
-  }
 
   // Build order by clause
   let orderBy: any = { createdAt: 'desc' }
@@ -275,7 +259,6 @@ async function SearchFiltersSection({ params }: { params: any }) {
     name: s.name,
     category: s.category.name
   }))
-  const tags = ['best-seller', 'featured', 'new-arrival', 'todays-deal', 'sunglasses', 'contact-lenses', 'reading-glasses', 'computer-glasses', 'eye-care']
 
   console.log('Categories fetched for filters:', categoryList)
   console.log('Subcategories fetched for filters:', subcategoryList)
@@ -285,8 +268,6 @@ async function SearchFiltersSection({ params }: { params: any }) {
       <SearchFilters 
         categories={categoryList}
         subcategories={subcategoryList}
-        tags={tags}
-        maxPrice={1000}
       />
     </div>
   )

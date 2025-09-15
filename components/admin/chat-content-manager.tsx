@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,8 @@ interface ChatQuestion {
   id: string
   question: string
   options: ChatOption[]
+  isFinal?: boolean
+  isDynamic?: boolean
 }
 
 interface ChatOption {
@@ -21,6 +23,7 @@ interface ChatOption {
   text: string
   icon: string
   score: { [key: string]: number }
+  nextQuestionId?: string
 }
 
 interface ChatResult {
@@ -75,25 +78,97 @@ const createDefaultChatContent = (categories: Array<{ name: string; slug: string
             id: 'computer',
             text: 'العمل على الكمبيوتر',
             icon: 'Monitor',
+            nextQuestionId: 'lifestyle',
             score: createScoreObject({ computer: 3, reading: 2, medical: 1, sunglasses: 0, contact: 1, care: 0 })
           },
           {
             id: 'reading',
             text: 'القراءة والدراسة',
             icon: 'BookOpen',
+            nextQuestionId: 'lifestyle',
             score: createScoreObject({ reading: 3, medical: 2, computer: 1, sunglasses: 0, contact: 1, care: 0 })
           },
           {
             id: 'outdoor',
             text: 'الأنشطة الخارجية',
             icon: 'Sun',
+            nextQuestionId: 'lifestyle',
             score: createScoreObject({ sunglasses: 3, contact: 2, medical: 1, computer: 0, reading: 0, care: 1 })
           },
           {
             id: 'vision',
             text: 'تحسين الرؤية العامة',
             icon: 'Eye',
+            nextQuestionId: 'lifestyle',
             score: createScoreObject({ medical: 3, contact: 2, reading: 1, computer: 1, sunglasses: 0, care: 1 })
+          }
+        ]
+      },
+      {
+        id: 'lifestyle',
+        question: 'كيف تصف نمط حياتك؟',
+        options: [
+          {
+            id: 'active',
+            text: 'نشط ورياضي',
+            icon: 'Zap',
+            nextQuestionId: 'preference',
+            score: createScoreObject({ sunglasses: 2, contact: 3, medical: 1, computer: 0, reading: 0, care: 1 })
+          },
+          {
+            id: 'professional',
+            text: 'مهني وعملي',
+            icon: 'Monitor',
+            nextQuestionId: 'preference',
+            score: createScoreObject({ computer: 3, medical: 2, reading: 1, sunglasses: 0, contact: 1, care: 0 })
+          },
+          {
+            id: 'casual',
+            text: 'عادي ومريح',
+            icon: 'Heart',
+            nextQuestionId: 'preference',
+            score: createScoreObject({ reading: 2, medical: 2, sunglasses: 1, computer: 1, contact: 1, care: 1 })
+          },
+          {
+            id: 'outdoor',
+            text: 'خارجي ومغامر',
+            icon: 'Sun',
+            nextQuestionId: 'preference',
+            score: createScoreObject({ sunglasses: 3, contact: 2, medical: 1, computer: 0, reading: 0, care: 1 })
+          }
+        ]
+      },
+      {
+        id: 'preference',
+        question: 'ما هو تفضيلك الشخصي؟',
+        options: [
+          {
+            id: 'comfort',
+            text: 'الراحة والسهولة',
+            icon: 'Heart',
+            nextQuestionId: 'final-result',
+            score: createScoreObject({ contact: 3, medical: 2, reading: 2, computer: 1, sunglasses: 1, care: 1 })
+          },
+          {
+            id: 'style',
+            text: 'الأناقة والمظهر',
+            icon: 'Eye',
+            nextQuestionId: 'final-result',
+            score: createScoreObject({ sunglasses: 3, medical: 2, reading: 2, computer: 1, contact: 1, care: 0 })
+          },
+          {
+            id: 'functionality',
+            text: 'الوظائف المتقدمة',
+            icon: 'Zap',
+            nextQuestionId: 'final-result',
+            score: createScoreObject({ computer: 3, medical: 2, reading: 1, sunglasses: 1, contact: 2, care: 1 })
+          },
+          {
+            id: 'maintenance',
+            text: 'سهولة الصيانة',
+            icon: 'BookOpen',
+            nextQuestionId: 'final-result',
+            score: createScoreObject({ reading: 3, medical: 2, sunglasses: 2, computer: 1, contact: 0, care: 2 })
           }
         ]
       }
@@ -125,6 +200,11 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     return createDefaultChatContent([]) // Will be updated when categories load
   })
   const [activeTab, setActiveTab] = useState<'welcome' | 'questions' | 'results'>('welcome')
+  
+  // Refs for auto-scrolling
+  const questionsContainerRef = useRef<HTMLDivElement>(null)
+  const lastAddedQuestionRef = useRef<HTMLDivElement>(null)
+  const lastAddedOptionRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setContent(chatContent || createDefaultChatContent(categories))
@@ -160,6 +240,29 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     })
   }
 
+  // Auto-scroll functions
+  const scrollToElement = (element: HTMLElement | null) => {
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      })
+    }
+  }
+
+  const scrollToLastQuestion = () => {
+    setTimeout(() => {
+      scrollToElement(lastAddedQuestionRef.current)
+    }, 100)
+  }
+
+  const scrollToLastOption = () => {
+    setTimeout(() => {
+      scrollToElement(lastAddedOptionRef.current)
+    }, 100)
+  }
+
   const addQuestion = () => {
     const newQuestion: ChatQuestion = {
       id: `question-${Date.now()}`,
@@ -170,6 +273,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
       ...prev,
       questions: [...(prev.questions || []), newQuestion]
     }))
+    scrollToLastQuestion()
   }
 
   const updateQuestion = (index: number, field: keyof ChatQuestion, value: any) => {
@@ -199,7 +303,8 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
       id: `option-${Date.now()}`,
       text: 'خيار جديد',
       icon: 'Heart',
-      score: scoreObject
+      score: scoreObject,
+      nextQuestionId: ''
     }
     setContent(prev => ({
       ...prev,
@@ -209,6 +314,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
           : q
       )
     }))
+    scrollToLastOption()
   }
 
   const updateOption = (questionIndex: number, optionIndex: number, field: keyof ChatOption, value: any) => {
@@ -356,20 +462,29 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
 
       {/* Questions Tab */}
       {activeTab === 'questions' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h4 className="text-md font-medium">أسئلة الدردشة</h4>
-            <Button onClick={addQuestion} size="sm">
+            <div>
+              <h4 className="text-xl font-semibold text-gray-900">أسئلة الدردشة</h4>
+              <p className="text-sm text-gray-600 mt-1">قم بإدارة الأسئلة وخيارات الإجابة للدردشة المساعدة</p>
+            </div>
+            <Button onClick={addQuestion} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
-              إضافة سؤال
+              إضافة سؤال جديد
             </Button>
           </div>
 
-          {content.questions?.map((question, questionIndex) => (
-            <Card key={question.id}>
-              <CardHeader>
+          <div ref={questionsContainerRef}>
+            {content.questions && content.questions.length > 0 ? (
+              content.questions.map((question, questionIndex) => (
+              <Card 
+                key={question.id} 
+                className="mb-4"
+                ref={questionIndex === content.questions.length - 1 ? lastAddedQuestionRef : null}
+              >
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">سؤال {questionIndex + 1}</CardTitle>
+                  <CardTitle className="text-lg">سؤال {questionIndex + 1}</CardTitle>
                   <Button
                     onClick={() => deleteQuestion(questionIndex)}
                     variant="destructive"
@@ -379,103 +494,147 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {/* Question Text */}
                 <div>
-                  <Label htmlFor={`question-${questionIndex}`}>نص السؤال</Label>
+                  <Label htmlFor={`question-${questionIndex}`} className="text-base font-medium">نص السؤال</Label>
                   <Input
                     id={`question-${questionIndex}`}
                     value={question.question}
                     onChange={(e) => updateQuestion(questionIndex, 'question', e.target.value)}
                     placeholder="أدخل نص السؤال..."
-                    className="mt-2"
+                    className="mt-2 text-base"
                   />
                 </div>
 
+                {/* Answer Options */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label>خيارات الإجابة</Label>
-                    <Button onClick={() => addOption(questionIndex)} size="sm" variant="outline">
+                  <div className="flex items-center justify-between mb-4">
+                    <Label className="text-base font-medium">خيارات الإجابة</Label>
+                    <Button onClick={() => addOption(questionIndex)} size="sm" className="bg-blue-600 hover:bg-blue-700">
                       <Plus className="w-4 h-4 mr-2" />
                       إضافة خيار
                     </Button>
                   </div>
 
-                  {question.options?.map((option, optionIndex) => (
-                    <div key={option.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">خيار {optionIndex + 1}</span>
-                        <Button
-                          onClick={() => deleteOption(questionIndex, optionIndex)}
-                          variant="destructive"
-                          size="sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`option-text-${questionIndex}-${optionIndex}`}>نص الخيار</Label>
-                          <Input
-                            id={`option-text-${questionIndex}-${optionIndex}`}
-                            value={option.text}
-                            onChange={(e) => updateOption(questionIndex, optionIndex, 'text', e.target.value)}
-                            placeholder="أدخل نص الخيار..."
-                            className="mt-2"
-                          />
+                  <div className="space-y-3">
+                    {question.options?.map((option, optionIndex) => (
+                      <div 
+                        key={option.id} 
+                        className="bg-gray-50 rounded-lg p-4 border"
+                        ref={optionIndex === question.options.length - 1 ? lastAddedOptionRef : null}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-medium text-gray-700">خيار {optionIndex + 1}</span>
+                          <Button
+                            onClick={() => deleteOption(questionIndex, optionIndex)}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
 
-                        <div>
-                          <Label htmlFor={`option-icon-${questionIndex}-${optionIndex}`}>الأيقونة</Label>
+                        {/* Option Details - Simplified Layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`option-text-${questionIndex}-${optionIndex}`} className="text-sm">نص الخيار</Label>
+                            <Input
+                              id={`option-text-${questionIndex}-${optionIndex}`}
+                              value={option.text}
+                              onChange={(e) => updateOption(questionIndex, optionIndex, 'text', e.target.value)}
+                              placeholder="أدخل نص الخيار..."
+                              className="mt-1"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`option-icon-${questionIndex}-${optionIndex}`} className="text-sm">الأيقونة</Label>
+                            <select
+                              id={`option-icon-${questionIndex}-${optionIndex}`}
+                              value={option.icon}
+                              onChange={(e) => updateOption(questionIndex, optionIndex, 'icon', e.target.value)}
+                              className="mt-1 w-full p-2 border rounded-md"
+                            >
+                              {iconOptions.map(icon => (
+                                <option key={icon.value} value={icon.value}>
+                                  {icon.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <Label htmlFor={`option-next-${questionIndex}-${optionIndex}`} className="text-sm">السؤال التالي</Label>
                           <select
-                            id={`option-icon-${questionIndex}-${optionIndex}`}
-                            value={option.icon}
-                            onChange={(e) => updateOption(questionIndex, optionIndex, 'icon', e.target.value)}
-                            className="mt-2 w-full p-2 border rounded-md"
+                            id={`option-next-${questionIndex}-${optionIndex}`}
+                            value={option.nextQuestionId || ''}
+                            onChange={(e) => updateOption(questionIndex, optionIndex, 'nextQuestionId', e.target.value)}
+                            className="mt-1 w-full p-2 border rounded-md"
                           >
-                            {iconOptions.map(icon => (
-                              <option key={icon.value} value={icon.value}>
-                                {icon.label}
+                            <option value="">اختر السؤال التالي</option>
+                            {content.questions?.filter((q, qIndex) => qIndex !== questionIndex).map((q, qIndex) => (
+                              <option key={q.id} value={q.id}>
+                                {q.question.length > 50 ? q.question.substring(0, 50) + '...' : q.question}
                               </option>
                             ))}
+                            <option value="face-upload">تحليل شكل الوجه</option>
+                            <option value="final-result">النتيجة النهائية</option>
                           </select>
                         </div>
-                      </div>
 
-                      <div>
-                        <Label>النقاط (Scores)</Label>
-                        {isLoadingCategories ? (
-                          <div className="text-sm text-gray-500 mt-2">جاري تحميل الفئات...</div>
-                        ) : (
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                            {categories.map(category => (
-                              <div key={category.slug} className="flex items-center space-x-2">
-                                <Label htmlFor={`score-${questionIndex}-${optionIndex}-${category.slug}`} className="text-xs">
-                                  {category.name}
-                                </Label>
-                                <Input
-                                  id={`score-${questionIndex}-${optionIndex}-${category.slug}`}
-                                  type="number"
-                                  min="0"
-                                  max="3"
-                                  value={option.score[category.slug] || 0}
-                                  onChange={(e) => updateOption(questionIndex, optionIndex, 'score', {
-                                    ...option.score,
-                                    [category.slug]: parseInt(e.target.value) || 0
-                                  })}
-                                  className="w-16 h-8 text-xs"
-                                />
-                              </div>
-                            ))}
+                        {/* Simplified Scoring - Only show if categories are loaded */}
+                        {!isLoadingCategories && categories.length > 0 && (
+                          <div className="mt-3">
+                            <Label className="text-sm font-medium text-gray-600">النقاط</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                              {categories.slice(0, 6).map(category => (
+                                <div key={category.slug} className="flex items-center justify-between space-x-3">
+                                  <Label htmlFor={`score-${questionIndex}-${optionIndex}-${category.slug}`} className="text-sm text-gray-700 flex-1">
+                                    {category.name}
+                                  </Label>
+                                  <Input
+                                    id={`score-${questionIndex}-${optionIndex}-${category.slug}`}
+                                    type="number"
+                                    min="0"
+                                    max="3"
+                                    value={option.score[category.slug] || 0}
+                                    onChange={(e) => updateOption(questionIndex, optionIndex, 'score', {
+                                      ...option.score,
+                                      [category.slug]: parseInt(e.target.value) || 0
+                                    })}
+                                    className="w-16 h-8 text-sm"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            {categories.length > 6 && (
+                              <p className="text-xs text-gray-500 mt-1">+ {categories.length - 6} فئات أخرى</p>
+                            )}
                           </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
+            ))
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <div className="mx-auto w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                <MessageCircle className="w-6 h-6 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد أسئلة بعد</h3>
+              <p className="text-gray-600 mb-4">ابدأ بإنشاء سؤال جديد لإعداد الدردشة المساعدة</p>
+              <Button onClick={addQuestion} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                إضافة أول سؤال
+              </Button>
+            </div>
+          )}
+          </div>
         </div>
       )}
 

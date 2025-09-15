@@ -2,11 +2,8 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { X, Filter, ChevronDown, ChevronUp } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -14,41 +11,27 @@ import { useRouter, useSearchParams } from 'next/navigation'
 interface SearchFiltersProps {
   categories: string[]
   subcategories: Array<{ name: string; category: string }>
-  tags: string[]
-  maxPrice: number
 }
 
-export default function SearchFilters({ categories, subcategories, tags, maxPrice }: SearchFiltersProps) {
+export default function SearchFilters({ categories, subcategories }: SearchFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isOpen, setIsOpen] = useState(false) // Closed by default on mobile
-  const [priceRange, setPriceRange] = useState([0, maxPrice])
   
   // Get current filter values
   const currentCategory = searchParams.get('category') || ''
   const currentSubcategory = searchParams.get('subcategory') || ''
-  const currentTags = searchParams.getAll('tag')
-  const currentMinPrice = searchParams.get('minPrice') || '0'
-  const currentMaxPrice = searchParams.get('maxPrice') || maxPrice.toString()
 
   // Arabic translations
   const translations = {
     filters: 'البحث',
     category: 'الفئة',
     subcategory: 'الفئة الفرعية',
-    tags: 'العلامات',
-    priceRange: 'نطاق السعر',
     clearAll: 'مسح الكل',
-    apply: 'تطبيق',
     showFilters: 'إظهار البحث',
     hideFilters: 'إخفاء البحث',
     allCategories: 'جميع الفئات',
     allSubcategories: 'جميع الفئات الفرعية',
-    allTags: 'جميع العلامات',
-    price: 'السعر',
-    egp: 'ج.م',
-    from: 'من',
-    to: 'إلى',
     noResults: 'لا توجد نتائج',
     results: 'نتيجة',
     resultsPlural: 'نتائج'
@@ -92,43 +75,19 @@ export default function SearchFilters({ categories, subcategories, tags, maxPric
     }
   }
 
-  const handleTagChange = (tag: string) => {
-    const newTags = currentTags.includes(tag)
-      ? currentTags.filter(t => t !== tag)
-      : [...currentTags, tag]
-    updateFilters({ tag: newTags })
-  }
 
-  const handlePriceChange = (values: number[]) => {
-    setPriceRange(values)
-  }
-
-  const applyPriceFilter = () => {
-    updateFilters({
-      minPrice: priceRange[0].toString(),
-      maxPrice: priceRange[1].toString()
-    })
-  }
 
   const removeFilter = (key: string, value?: string) => {
     if (key === 'category') {
       updateFilters({ category: '', subcategory: '' })
     } else if (key === 'subcategory') {
       updateFilters({ subcategory: '' })
-    } else if (key === 'tag') {
-      const newTags = currentTags.filter(t => t !== value)
-      updateFilters({ tag: newTags })
-    } else if (key === 'price') {
-      updateFilters({ minPrice: '', maxPrice: '' })
-      setPriceRange([0, maxPrice])
     }
   }
 
   const activeFilters = [
     ...(currentCategory ? [{ key: 'category', value: currentCategory, label: currentCategory }] : []),
-    ...(currentSubcategory ? [{ key: 'subcategory', value: currentSubcategory, label: currentSubcategory }] : []),
-    ...currentTags.map(tag => ({ key: 'tag', value: tag, label: tag })),
-    ...(currentMinPrice !== '0' || currentMaxPrice !== maxPrice.toString() ? [{ key: 'price', value: '', label: `${currentMinPrice} - ${currentMaxPrice} ${translations.egp}` }] : [])
+    ...(currentSubcategory ? [{ key: 'subcategory', value: currentSubcategory, label: currentSubcategory }] : [])
   ]
 
   return (
@@ -254,75 +213,6 @@ export default function SearchFilters({ categories, subcategories, tags, maxPric
             </div>
           )}
 
-          <Separator className="my-4 sm:my-6" />
-
-          {/* Tags Filter */}
-          <div className="mb-4 sm:mb-6">
-            <Label className="text-sm font-semibold mb-3 sm:mb-4 block text-gray-800">{translations.tags}</Label>
-            <div className="space-y-2 sm:space-y-3">
-              {tags.map((tag) => (
-                <div key={tag} className="flex items-center space-x-2 space-x-reverse">
-                  <Checkbox
-                    id={tag}
-                    checked={currentTags.includes(tag)}
-                    onCheckedChange={() => handleTagChange(tag)}
-                    className="text-primary"
-                  />
-                  <Label htmlFor={tag} className="text-xs sm:text-sm text-gray-700 cursor-pointer">
-                    {tag}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator className="my-3 sm:my-4" />
-
-          {/* Price Range Filter */}
-          <div className="mb-4 sm:mb-6">
-            <Label className="text-sm font-semibold mb-3 sm:mb-4 block text-gray-800">{translations.priceRange}</Label>
-            <div className="space-y-3 sm:space-y-4">
-              <Slider
-                value={priceRange}
-                onValueChange={handlePriceChange}
-                max={maxPrice}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <div className="flex-1 w-full sm:w-auto">
-                  <Label className="text-xs text-gray-600 mb-2 block">{translations.from}</Label>
-                  <Input
-                    type="number"
-                    value={priceRange[0]}
-                    onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                    className="text-xs sm:text-sm border-gray-200 focus:border-primary focus:ring-primary input-mobile"
-                    min={0}
-                    max={priceRange[1]}
-                  />
-                </div>
-                <div className="flex-1 w-full sm:w-auto">
-                  <Label className="text-xs text-gray-600 mb-2 block">{translations.to}</Label>
-                  <Input
-                    type="number"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || maxPrice])}
-                    className="text-xs sm:text-sm border-gray-200 focus:border-primary focus:ring-primary input-mobile"
-                    min={priceRange[0]}
-                    max={maxPrice}
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={applyPriceFilter}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground btn-mobile"
-                size="sm"
-              >
-                {translations.apply}
-              </Button>
-            </div>
-          </div>
         </>
       </div>
     </div>

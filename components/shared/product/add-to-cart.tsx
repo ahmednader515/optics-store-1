@@ -20,7 +20,8 @@ interface AddToCartProps {
 
 export default function AddToCart({ product, className }: AddToCartProps) {
   const [quantity, setQuantity] = useState(1)
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedLensSize, setSelectedLensSize] = useState<string | null>(null)
   const { addItem } = useCartStore()
   const { toast } = useToast()
@@ -32,10 +33,21 @@ export default function AddToCart({ product, className }: AddToCartProps) {
   }
 
   const handleAddToCart = async () => {
-    if ((product.colors.length > 1 || product.sizes.length > 1) && !selectedVariant) {
+    // Check if color selection is required
+    if (product.colors && product.colors.length > 1 && !selectedColor) {
       toast({
-        title: 'يرجى اختيار الخيارات',
-        description: 'اختر اللون الحجم قبل الإضافة إلى السلة',
+        title: 'يرجى اختيار اللون',
+        description: 'اختر لون المنتج قبل الإضافة إلى السلة',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Check if size selection is required
+    if (product.sizes && product.sizes.length > 1 && !selectedSize) {
+      toast({
+        title: 'يرجى اختيار الحجم',
+        description: 'اختر حجم المنتج قبل الإضافة إلى السلة',
         variant: 'destructive',
       })
       return
@@ -60,8 +72,8 @@ export default function AddToCart({ product, className }: AddToCartProps) {
           image: product.images[0],
           price: Number(product.price), // Convert to number to prevent toFixed errors
           countInStock: product.countInStock,
-          color: selectedVariant || product.colors[0] || '',
-          size: product.sizes[0] || '',
+          color: selectedColor || product.colors[0] || '',
+          size: selectedSize || product.sizes[0] || '',
           lensSize: selectedLensSize || product.lensSizes?.[0] || '',
           quantity: 1,
           clientId: `${product.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -93,9 +105,9 @@ export default function AddToCart({ product, className }: AddToCartProps) {
                   <button
                     key={color}
                     className={`px-3 py-1 border rounded ${
-                      selectedVariant === color ? 'border-primary bg-primary text-white' : 'border-gray-300'
+                      selectedColor === color ? 'border-primary bg-primary text-white' : 'border-gray-300'
                     }`}
-                    onClick={() => setSelectedVariant(color)}
+                    onClick={() => setSelectedColor(color)}
                   >
                     {color}
                   </button>
@@ -111,9 +123,9 @@ export default function AddToCart({ product, className }: AddToCartProps) {
                   <button
                     key={size}
                     className={`px-3 py-1 border rounded ${
-                      selectedVariant === size ? 'border-primary bg-primary text-white' : 'border-gray-300'
+                      selectedSize === size ? 'border-primary bg-primary text-white' : 'border-gray-300'
                     }`}
-                    onClick={() => setSelectedVariant(size)}
+                    onClick={() => setSelectedSize(size)}
                   >
                     {size}
                   </button>
