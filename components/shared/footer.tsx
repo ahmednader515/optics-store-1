@@ -43,12 +43,12 @@ export default function Footer() {
             <h3 className="text-base sm:text-lg font-semibold text-right">خدمة العملاء</h3>
             <ul className="space-y-2 text-xs sm:text-sm text-right">
               <li>
-                <Link href="/page/contact-us" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link href="/page/تواصل-معنا" className="text-gray-300 hover:text-white transition-colors duration-200">
                   اتصل بنا
                 </Link>
               </li>
               <li>
-                <Link href="/page/shipping" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link href="/page/معلومات-التوصيل" className="text-gray-300 hover:text-white transition-colors duration-200">
                   معلومات التوصيل
                 </Link>
               </li>
@@ -60,12 +60,12 @@ export default function Footer() {
             <h3 className="text-base sm:text-lg font-semibold text-right">قانوني</h3>
             <ul className="space-y-2 text-xs sm:text-sm text-right">
               <li>
-                <Link href="/page/privacy-policy" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link href="/page/سياسة-الخصوصية" className="text-gray-300 hover:text-white transition-colors duration-200">
                   سياسة الخصوصية
                 </Link>
               </li>
               <li>
-                <Link href="/page/conditions-of-use" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link href="/page/شروط-الخدمة" className="text-gray-300 hover:text-white transition-colors duration-200">
                   شروط الخدمة
                 </Link>
               </li>
