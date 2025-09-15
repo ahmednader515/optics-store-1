@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Plus, Trash2, Save, Eye, Monitor, Sun, BookOpen, Heart, Zap } from 'lucide-react'
+import { Plus, Trash2, Eye, Monitor, Sun, BookOpen, Heart, Zap } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { getAllCategories } from '@/lib/actions/category.actions'
 
@@ -240,6 +240,13 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     })
   }
 
+  // Auto-save when content changes
+  useEffect(() => {
+    if (content && Object.keys(content).length > 0) {
+      onSave(content)
+    }
+  }, [content, onSave])
+
   // Auto-scroll functions
   const scrollToElement = (element: HTMLElement | null) => {
     if (element) {
@@ -396,10 +403,6 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">إدارة محتوى الدردشة المساعدة</h3>
-        <Button onClick={handleSave} className="flex items-center gap-2">
-          <Save className="w-4 h-4" />
-          حفظ التغييرات
-        </Button>
       </div>
 
       {/* Tabs */}
