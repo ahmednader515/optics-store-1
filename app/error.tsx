@@ -72,7 +72,7 @@ export default function Error({ error, reset }: ErrorProps) {
               variant="default"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
+              حاول مرة أخرى
             </Button>
             
             <Button 
@@ -81,7 +81,7 @@ export default function Error({ error, reset }: ErrorProps) {
               variant="outline"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh Page
+              تحديث الصفحة
             </Button>
             
             <Button 
@@ -90,12 +90,12 @@ export default function Error({ error, reset }: ErrorProps) {
               variant="outline"
             >
               <Home className="mr-2 h-4 w-4" />
-              Go Home
+              الرجوع للصفحة الرئيسية
             </Button>
           </div>
           
           <p className="text-xs text-gray-500 text-center">
-            If this problem persists, please contact our support team.
+            إذا كان هذا المشكلة تستمر، يرجى الاتصال بفريق الدعم.
           </p>
         </CardContent>
       </Card>
