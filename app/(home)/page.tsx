@@ -136,6 +136,7 @@ async function CategoryProductsSection({ categories }: { categories: string[] })
         { avgRating: 'desc' }
       ],
       select: {
+        id: true,
         name: true,
         slug: true,
         images: true,
@@ -153,14 +154,28 @@ async function CategoryProductsSection({ categories }: { categories: string[] })
         .filter(product => product.category === category)
         .slice(0, 8) // Limit to 8 products per category
         .map(product => ({
+          id: product.id || product.slug, // Use slug as fallback for id
           name: product.name,
           slug: product.slug,
-          image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : '',
           images: Array.isArray(product.images) ? product.images : [],
           price: Number(product.price),
           listPrice: Number(product.listPrice),
           avgRating: Number(product.avgRating),
           numReviews: Number(product.numReviews),
+          category: product.category,
+          // Add other required fields with defaults
+          brand: 'Unknown',
+          description: '',
+          countInStock: 10,
+          tags: [],
+          colors: ['White'],
+          sizes: ['M'],
+          numSales: 0,
+          isPublished: true,
+          lensSizes: [],
+          requiresMedicalCertificate: false,
+          deliveryPrice: 0,
+          deliveryTime: 1,
         }))
       return acc
     }, {} as Record<string, any[]>)

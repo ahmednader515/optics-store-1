@@ -138,24 +138,62 @@ async function ProductResults({ params, translations }: {
     orderBy = { avgRating: 'desc' }
   }
 
-  // Direct database queries
+  // Direct database queries - fetch all required fields for ProductCard
   const products = await (prisma as any).product.findMany({
     where,
     orderBy,
     skip,
     take: limit,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      images: true,
+      price: true,
+      listPrice: true,
+      avgRating: true,
+      numReviews: true,
+      category: true,
+      brand: true,
+      description: true,
+      countInStock: true,
+      tags: true,
+      colors: true,
+      sizes: true,
+      numSales: true,
+      isPublished: true,
+      lensSizes: true,
+      requiresMedicalCertificate: true,
+      deliveryPrice: true,
+      deliveryTime: true,
+    }
   })
   
   const totalProducts = await (prisma as any).product.count({ where })
 
-  // Convert Decimal values to numbers for client components
+  // Convert Decimal values to numbers for client components and ensure all required fields
   const normalizedProducts = products.map((product: any) => ({
-    ...product,
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    images: Array.isArray(product.images) ? product.images : [],
     price: Number(product.price),
     listPrice: Number(product.listPrice),
-    deliveryPrice: Number(product.deliveryPrice),
     avgRating: Number(product.avgRating),
     numReviews: Number(product.numReviews),
+    category: product.category,
+    brand: product.brand || 'Unknown',
+    description: product.description || '',
+    countInStock: product.countInStock || 10,
+    tags: product.tags || [],
+    colors: product.colors || ['White'],
+    sizes: product.sizes || ['M'],
+    numSales: product.numSales || 0,
+    isPublished: product.isPublished || true,
+    lensSizes: product.lensSizes || [],
+    requiresMedicalCertificate: product.requiresMedicalCertificate || false,
+    deliveryPrice: Number(product.deliveryPrice) || 0,
+    deliveryTime: product.deliveryTime || 1,
   }))
 
   const totalPages = Math.ceil(totalProducts / limit)
@@ -192,7 +230,11 @@ async function ProductResults({ params, translations }: {
         <>
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8'>
             {normalizedProducts.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                showColorSelector={true}
+              />
             ))}
           </div>
 
