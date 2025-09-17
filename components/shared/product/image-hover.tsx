@@ -24,6 +24,10 @@ const ImageHover = ({
     setIsHovered(false)
   }
 
+  // Validate image sources
+  const validSrc = src && src.trim() !== '' ? src : '/placeholder-image.jpg'
+  const validHoverSrc = hoverSrc && hoverSrc.trim() !== '' ? hoverSrc : validSrc
+
   return (
     <div
       className='relative w-full h-full'
@@ -31,7 +35,7 @@ const ImageHover = ({
       onMouseLeave={handleMouseLeave}
     >
       <Image
-        src={src}
+        src={validSrc}
         alt={alt}
         fill
         sizes="(max-width: 768px) 96px, (max-width: 1200px) 50vw, 33vw"
@@ -41,7 +45,7 @@ const ImageHover = ({
         priority={false}
       />
       <Image
-        src={hoverSrc}
+        src={validHoverSrc}
         alt={alt}
         fill
         sizes="(max-width: 768px) 96px, (max-width: 1200px) 50vw, 33vw"

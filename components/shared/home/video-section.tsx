@@ -23,37 +23,72 @@ interface VideoSectionProps {
   videos: VideoItem[]
 }
 
-// Video Preview Component
-function VideoPreview({ video, isDesktop = false }: { video: VideoItem; isDesktop?: boolean }) {
+// Video Preview Component - Optimized loading with timeout and lazy loading
+function VideoPreview({ video }: { video: VideoItem }) {
   const [videoError, setVideoError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [retryCount, setRetryCount] = useState(0)
+  const [hasStarted, setHasStarted] = useState(false)
+  const [isInView, setIsInView] = useState(false)
+  const videoRef = React.useRef<HTMLVideoElement>(null)
+
+  // Intersection Observer for lazy loading
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (videoRef.current) {
+      observer.observe(videoRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
+  // Timeout for loading - if video doesn't load in 8 seconds, show error
+  React.useEffect(() => {
+    if (!isInView) return
+
+    const timeout = setTimeout(() => {
+      if (isLoading && !hasStarted) {
+        setVideoError(true)
+        setIsLoading(false)
+      }
+    }, 8000) // 8 second timeout
+
+    return () => clearTimeout(timeout)
+  }, [isLoading, hasStarted, isInView])
 
   const handleVideoError = () => {
-    if (retryCount < 2) {
-      // Retry up to 2 times
-      setRetryCount(prev => prev + 1)
-      setIsLoading(true)
-      // Force re-render by updating the src
-      setTimeout(() => {
-        setIsLoading(false)
-      }, 1000)
-    } else {
-      setVideoError(true)
-      setIsLoading(false)
-    }
+    setVideoError(true)
+    setIsLoading(false)
   }
 
   const handleVideoLoaded = () => {
     setVideoError(false)
     setIsLoading(false)
-    setRetryCount(0)
+    setHasStarted(true)
+  }
+
+  const handleVideoCanPlay = () => {
+    setVideoError(false)
+    setIsLoading(false)
+    setHasStarted(true)
+  }
+
+  const handleVideoLoadStart = () => {
+    setHasStarted(true)
   }
 
   return (
-    <div className={`relative group ${isDesktop ? '' : 'flex-shrink-0 w-48'}`}>
+    <div className="relative group flex-shrink-0 w-48">
       <VideoModal video={video}>
-        <div className="relative overflow-hidden rounded-lg bg-gray-100 aspect-[9/16] cursor-pointer">
+        <div className="relative overflow-hidden rounded-lg bg-gray-100 aspect-[9/16] cursor-pointer group-hover:scale-105 transition-transform duration-300">
           {videoError ? (
             <div className="w-full h-full flex items-center justify-center bg-gray-200">
               <div className="text-center text-gray-500">
@@ -64,76 +99,63 @@ function VideoPreview({ video, isDesktop = false }: { video: VideoItem; isDeskto
           ) : (
             <>
               {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-200 z-10">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
                 </div>
               )}
               <video
-                src={video.url}
+                ref={videoRef}
+                src={isInView ? video.url : undefined}
                 className="w-full h-full object-cover"
-                autoPlay
+                autoPlay={isInView}
                 muted
                 loop
                 playsInline
                 controls={false}
-                preload="metadata"
+                preload={isInView ? "auto" : "none"}
                 onError={handleVideoError}
+                onLoadStart={handleVideoLoadStart}
                 onLoadedData={handleVideoLoaded}
-                onCanPlay={handleVideoLoaded}
+                onCanPlay={handleVideoCanPlay}
                 onMouseEnter={(e) => {
-                  if (!videoError) e.currentTarget.play()
+                  if (!videoError && !isLoading && hasStarted && isInView) {
+                    e.currentTarget.play().catch(() => {})
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  if (!videoError) e.currentTarget.pause()
+                  if (!videoError && !isLoading && hasStarted && isInView) {
+                    e.currentTarget.pause()
+                  }
                 }}
-                key={`${video.url}-${retryCount}`}
               />
             </>
           )}
           
           {/* Play icon overlay - Bottom left */}
-          <div className={`absolute ${isDesktop ? 'bottom-4 left-4' : 'bottom-3 left-3'}`}>
-            <div className="bg-black bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-all duration-200 shadow-lg">
-              <Play className={`text-white fill-white ${isDesktop ? 'w-6 h-6' : 'w-5 h-5'}`} />
+          <div className="absolute bottom-3 left-3">
+            <div className="bg-black bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-all duration-200 shadow-lg group-hover:scale-110">
+              <Play className="text-white fill-white w-5 h-5" />
             </div>
           </div>
           
           {/* Always visible overlay with title and button */}
-          <div className={`absolute inset-0 bg-black bg-opacity-40 flex flex-col ${isDesktop ? 'items-center justify-center p-4' : 'justify-end p-4'}`}>
-            {isDesktop ? (
-              <>
-                <h3 className="text-white text-lg font-bold text-center mb-4 drop-shadow-lg">
-                  {video.title}
-                </h3>
-                {video.link && (
-                  <Link href={video.link} onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      size="sm" 
-                      className="bg-white text-black hover:bg-gray-100 font-medium px-6 py-2 rounded-full shadow-lg"
-                    >
-                      عرض المزيد
-                    </Button>
-                  </Link>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center justify-between w-full">
-                <h3 className="text-white text-lg font-bold drop-shadow-lg flex-1 text-right">
-                  {video.title}
-                </h3>
-                {video.link && (
-                  <Link href={video.link} className="mr-3" onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      size="sm" 
-                      className="bg-white text-black hover:bg-gray-100 font-medium p-2 rounded-full shadow-lg"
-                      title="عرض المزيد"
-                    >
-                      <Play className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            )}
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-end p-4">
+            <div className="flex items-center justify-between w-full">
+              <h3 className="text-white text-lg font-bold drop-shadow-lg flex-1 text-right">
+                {video.title}
+              </h3>
+              {video.link && (
+                <Link href={video.link} className="mr-3" onClick={(e) => e.stopPropagation()}>
+                  <Button 
+                    size="sm" 
+                    className="bg-white text-black hover:bg-gray-100 font-medium p-2 rounded-full shadow-lg"
+                    title="عرض المزيد"
+                  >
+                    <Play className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </VideoModal>
@@ -233,8 +255,8 @@ export default function VideoSection({ videos }: VideoSectionProps) {
       <Card className="w-full rounded-xl shadow-sm">
         <CardContent className="card-mobile">
           <h2 className="text-2xl font-bold mb-6 text-right">أحدث المجموعات</h2>
-          {/* Mobile: Horizontal scrollable row starting from middle */}
-          <div className='flex gap-4 overflow-x-auto pb-2 md:hidden scrollbar-hide' 
+          {/* Horizontal scrollable row for both mobile and desktop */}
+          <div className='flex gap-4 overflow-x-auto pb-2 scrollbar-hide' 
                ref={(el) => {
                  if (el && videos.length > 1) {
                    // Scroll to middle video on mount
@@ -247,21 +269,6 @@ export default function VideoSection({ videos }: VideoSectionProps) {
                }}>
             {videos.map((video) => (
               <VideoPreview key={video.id} video={video} />
-            ))}
-          </div>
-          
-          {/* Desktop: Centered grid layout with full width */}
-          <div className={`hidden md:grid gap-4 sm:gap-6 ${
-            videos.length === 1 
-              ? 'grid-cols-1' 
-              : videos.length === 2 
-                ? 'grid-cols-2' 
-                : videos.length === 3
-                  ? 'grid-cols-3'
-                  : 'grid-cols-3'
-          }`} style={{ gridTemplateRows: '1fr' }}>
-            {videos.map((video) => (
-              <VideoPreview key={video.id} video={video} isDesktop />
             ))}
           </div>
         </CardContent>

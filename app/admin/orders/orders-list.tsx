@@ -19,6 +19,7 @@ type Order = {
   createdAt: Date
   totalPrice: number
   isPaid: boolean
+  isOutForDelivery: boolean
   isDelivered: boolean
   medicalCertificateImage?: string | null
   user: {
@@ -133,9 +134,11 @@ export default function OrdersList({ orders, totalPages, currentPage }: OrdersLi
                   <span className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
                     order.isDelivered 
                       ? 'bg-green-100 text-green-800' 
+                      : order.isOutForDelivery
+                      ? 'bg-blue-100 text-blue-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {order.isDelivered ? 'مُسلم' : 'قيد التوصيل'}
+                    {order.isDelivered ? 'مُسلم' : order.isOutForDelivery ? 'في الطريق' : 'قيد التوصيل'}
                   </span>
                 </TableCell>
                 <TableCell className='py-4 px-4'>
@@ -177,9 +180,11 @@ export default function OrdersList({ orders, totalPages, currentPage }: OrdersLi
                 <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                   order.isDelivered 
                     ? 'bg-green-100 text-green-800' 
+                    : order.isOutForDelivery
+                    ? 'bg-blue-100 text-blue-800'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {order.isDelivered ? 'مُسلم' : 'قيد التوصيل'}
+                  {order.isDelivered ? 'مُسلم' : order.isOutForDelivery ? 'في الطريق' : 'قيد التوصيل'}
                 </span>
               </div>
             </div>

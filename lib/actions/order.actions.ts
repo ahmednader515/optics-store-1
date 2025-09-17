@@ -212,6 +212,45 @@ const updateProductStock = async (orderId: string) => {
     throw error
   }
 }
+export async function markOrderOutForDelivery(orderId: string) {
+  try {
+    // Mock mode removed: always use database
+    
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: {
+          select: { phone: true, name: true }
+        }
+      }
+    })
+    if (!order) throw new Error('Order not found')
+    
+    // For pre-paid orders, check if paid. For payment on delivery, skip this check
+    const isPaymentOnDelivery = order.paymentMethod?.includes('دفع عند الاستلام')
+    if (!isPaymentOnDelivery && !order.isPaid) {
+      throw new Error('Order is not paid')
+    }
+    
+    if (order.isOutForDelivery) throw new Error('Order is already out for delivery')
+    if (order.isDelivered) throw new Error('Order is already delivered')
+    
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        isOutForDelivery: true,
+        outForDeliveryAt: new Date(),
+      }
+    })
+    
+    revalidatePath(`/account/orders/${orderId}`)
+    revalidatePath('/admin/orders')
+    return { success: true, message: 'تم تحديد الطلب للخروج للتوصيل' }
+  } catch (err) {
+    return { success: false, message: formatError(err) }
+  }
+}
+
 export async function deliverOrder(orderId: string) {
   try {
     // Mock mode removed: always use database
@@ -225,19 +264,32 @@ export async function deliverOrder(orderId: string) {
       }
     })
     if (!order) throw new Error('Order not found')
-    if (!order.isPaid) throw new Error('Order is not paid')
+    
+    // For payment on delivery orders, mark as paid when delivered
+    const isPaymentOnDelivery = order.paymentMethod?.includes('دفع عند الاستلام')
+    const shouldMarkAsPaid = isPaymentOnDelivery && !order.isPaid
     
     await prisma.order.update({
       where: { id: orderId },
       data: {
         isDelivered: true,
         deliveredAt: new Date(),
+        ...(shouldMarkAsPaid && {
+          isPaid: true,
+          paidAt: new Date()
+        })
       }
     })
     
     if (order.user.phone) await sendAskReviewOrderItems({ order })
     revalidatePath(`/account/orders/${orderId}`)
-    return { success: true, message: 'تم تسليم الطلب بنجاح' }
+    revalidatePath('/admin/orders')
+    
+    const message = shouldMarkAsPaid 
+      ? 'تم تسليم الطلب ودفعه بنجاح' 
+      : 'تم تسليم الطلب بنجاح'
+    
+    return { success: true, message }
   } catch (err) {
     return { success: false, message: formatError(err) }
   }

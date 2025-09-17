@@ -50,6 +50,8 @@ export type Data = {
     totalPrice: number
     isPaid: boolean
     paidAt?: Date
+    isOutForDelivery: boolean
+    outForDeliveryAt?: Date
     isDelivered: boolean
     deliveredAt?: Date
     shippingAddress?: {

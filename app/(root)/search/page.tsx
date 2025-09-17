@@ -234,6 +234,7 @@ async function ProductResults({ params, translations }: {
                 key={product.id} 
                 product={product} 
                 showColorSelector={true}
+                horizontalLayout={true}
               />
             ))}
           </div>

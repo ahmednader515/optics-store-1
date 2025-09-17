@@ -49,16 +49,16 @@ export default function ProductPrice({
   }
 
   return (
-    <div className={cn('flex flex-col gap-1 items-start text-left', className)} dir="rtl">
-      <span className='text-2xl font-bold text-primary text-left'>
+    <div className="flex flex-col gap-1 items-start text-left" dir="rtl">
+      <span className={cn('font-bold text-primary text-left text-2xl', className)}>
         {formatPrice(price)}
       </span>
       {hasDiscount && (
         <>
-          <span className='text-sm text-muted-foreground line-through text-left'>
+          <span className={cn('text-muted-foreground line-through text-left', className?.includes('text-') ? className : 'text-sm')}>
             {formatPrice(originalPrice)}
           </span>
-          <Badge variant='destructive' className='text-xs w-fit text-left'>
+          <Badge variant='destructive' className={cn('w-fit text-left', className?.includes('text-') ? className : 'text-xs')}>
             {Math.round(((Number(originalPrice) - Number(price)) / Number(originalPrice)) * 100)}% خصم
           </Badge>
         </>

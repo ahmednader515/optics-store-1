@@ -191,7 +191,7 @@ async function CategoryProductsSection({ categories }: { categories: string[] })
           return (
             <Card key={category} className='w-full rounded-xl shadow-sm'>
               <CardContent className='card-mobile'>
-                <ProductSlider title={category} products={products} />
+                <ProductSlider title={category} products={products} horizontalLayout={true} />
               </CardContent>
             </Card>
           )

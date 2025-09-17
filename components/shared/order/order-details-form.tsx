@@ -18,7 +18,7 @@ import { cn, formatDateTime } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 import ProductPrice from '../product/product-price'
 import ActionButton from '../action-button'
-import { deliverOrder, updateOrderToPaid } from '@/lib/actions/order.actions'
+import { deliverOrder, updateOrderToPaid, markOrderOutForDelivery } from '@/lib/actions/order.actions'
 
 export default function OrderDetailsForm({
   order,
@@ -38,6 +38,8 @@ export default function OrderDetailsForm({
     paymentMethod,
     isPaid,
     paidAt,
+    isOutForDelivery,
+    outForDeliveryAt,
     isDelivered,
     deliveredAt,
     expectedDeliveryDate,
@@ -102,6 +104,16 @@ export default function OrderDetailsForm({
               <Badge>
                 تم التوصيل في {deliveredAt ? formatDateTime(deliveredAt).dateTime : 'غير محدد'}
               </Badge>
+            ) : isOutForDelivery ? (
+              <div>
+                <Badge className='bg-blue-100 text-blue-800'>
+                  في الطريق للتوصيل منذ {outForDeliveryAt ? formatDateTime(outForDeliveryAt).dateTime : 'غير محدد'}
+                </Badge>
+                <div className='mt-2'>
+                  <strong>موعد التوصيل المتوقع:</strong> <br />
+                  {expectedDeliveryDate ? formatDateTime(expectedDeliveryDate).dateTime : 'غير محدد'}
+                </div>
+              </div>
             ) : (
               <div>
                 {' '}
@@ -231,13 +243,34 @@ export default function OrderDetailsForm({
               </div>
             </div>
 
-            {isAdmin && !isPaid && paymentMethod === 'دفع عند الاستلام' && (
+            {/* For payment on delivery orders */}
+            {isAdmin && !isPaid && paymentMethod?.includes('دفع عند الاستلام') && !isOutForDelivery && !isDelivered && (
+              <ActionButton
+                caption='تحديد للخروج للتوصيل'
+                action={() => markOrderOutForDelivery(order.id)}
+              />
+            )}
+            {isAdmin && !isPaid && paymentMethod?.includes('دفع عند الاستلام') && isOutForDelivery && !isDelivered && (
+              <ActionButton
+                caption='تحديد كمُسلم ومدفوع'
+                action={() => deliverOrder(order.id)}
+              />
+            )}
+            
+            {/* For pre-paid orders */}
+            {isAdmin && !isPaid && !paymentMethod?.includes('دفع عند الاستلام') && (
               <ActionButton
                 caption='تحديد كمدفوع'
                 action={() => updateOrderToPaid(order.id)}
               />
             )}
-            {isAdmin && isPaid && !isDelivered && (
+            {isAdmin && isPaid && !isOutForDelivery && !isDelivered && (
+              <ActionButton
+                caption='تحديد للخروج للتوصيل'
+                action={() => markOrderOutForDelivery(order.id)}
+              />
+            )}
+            {isAdmin && isPaid && isOutForDelivery && !isDelivered && (
               <ActionButton
                 caption='تحديد كمُسلم'
                 action={() => deliverOrder(order.id)}

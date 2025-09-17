@@ -16,10 +16,12 @@ export default function ProductSlider({
   title,
   products,
   hideDetails = false,
+  horizontalLayout = false,
 }: {
   title?: string
   products: (IProductInput & { id: string })[]
   hideDetails?: boolean
+  horizontalLayout?: boolean
 }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [canScrollPrev, setCanScrollPrev] = React.useState(false)
@@ -77,6 +79,7 @@ export default function ProductSlider({
                 hideAddToCart
                 hideBorder
                 product={product}
+                horizontalLayout={horizontalLayout}
               />
             </CarouselItem>
           ))}

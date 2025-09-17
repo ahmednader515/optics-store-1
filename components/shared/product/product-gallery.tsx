@@ -6,6 +6,23 @@ import Zoom from 'react-medium-image-zoom'
 import 'react-medium-image-zoom/dist/styles.css'
 export default function ProductGallery({ images }: { images: string[] }) {
   const [selectedImage, setSelectedImage] = useState(0)
+  
+  // Filter out empty or invalid images
+  const validImages = images.filter(img => img && img.trim() !== '')
+  
+  // If no valid images, show placeholder
+  if (validImages.length === 0) {
+    return (
+      <div className='flex flex-col md:flex-row gap-2 md:gap-2'>
+        <div className='w-full md:flex-1 order-1 md:order-2'>
+          <div className='relative h-[300px] sm:h-[400px] md:h-[500px] bg-gray-100 rounded-lg flex items-center justify-center'>
+            <span className='text-gray-500'>لا توجد صورة متاحة</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
   return (
     <div className='flex flex-col md:flex-row gap-2 md:gap-2'>
       {/* Main Image - Full width on mobile, flex-1 on desktop */}
@@ -13,7 +30,7 @@ export default function ProductGallery({ images }: { images: string[] }) {
         <Zoom>
           <div className='relative h-[300px] sm:h-[400px] md:h-[500px]'>
             <Image
-              src={images[selectedImage]}
+              src={validImages[selectedImage] || '/images/p11-1.jpg'}
               alt={'product image'}
               fill
               sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw'
@@ -26,7 +43,7 @@ export default function ProductGallery({ images }: { images: string[] }) {
 
       {/* Thumbnail Images - Below main image on mobile, beside on desktop */}
       <div className='flex flex-row md:flex-col gap-2 md:mt-8 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0'>
-        {images.map((image, index) => (
+        {validImages.map((image, index) => (
           <button
             key={index}
             onClick={() => {
@@ -42,7 +59,7 @@ export default function ProductGallery({ images }: { images: string[] }) {
             }`}
           >
             <Image 
-              src={image} 
+              src={image || '/placeholder-image.jpg'} 
               alt={'product image'} 
               width={48} 
               height={48}

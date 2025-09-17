@@ -137,6 +137,8 @@ model Order {
   totalPrice              Decimal               @db.Decimal(10, 2)
   isPaid                  Boolean               @default(false)
   paidAt                  DateTime?
+  isOutForDelivery        Boolean               @default(false)
+  outForDeliveryAt        DateTime?
   isDelivered             Boolean               @default(false)
   deliveredAt             DateTime?
   createdAt               DateTime              @default(now())
