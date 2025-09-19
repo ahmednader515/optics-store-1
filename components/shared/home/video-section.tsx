@@ -256,17 +256,7 @@ export default function VideoSection({ videos }: VideoSectionProps) {
         <CardContent className="card-mobile">
           <h2 className="text-2xl font-bold mb-6 text-right">أحدث المجموعات</h2>
           {/* Horizontal scrollable row for both mobile and desktop */}
-          <div className='flex gap-4 overflow-x-auto pb-2 scrollbar-hide' 
-               ref={(el) => {
-                 if (el && videos.length > 1) {
-                   // Scroll to middle video on mount
-                   const middleIndex = Math.floor(videos.length / 2)
-                   const middleVideo = el.children[middleIndex] as HTMLElement
-                   if (middleVideo) {
-                     middleVideo.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-                   }
-                 }
-               }}>
+          <div className='flex gap-4 overflow-x-auto pb-2 scrollbar-hide'>
             {videos.map((video) => (
               <VideoPreview key={video.id} video={video} />
             ))}
