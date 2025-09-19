@@ -31,7 +31,7 @@ export const ProductInputSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   slug: z.string().optional(), // Made optional as it will be auto-generated
   category: z.string().min(1, 'Category is required'),
-  subcategory: z.string().optional(),
+  subcategories: z.array(z.string()).default([]),
   images: z.array(z.string()).min(1, 'Product must have at least one image'),
   brand: z.string().min(1, 'Brand is required'),
   description: z.string().min(1, 'Description is required'),
@@ -98,6 +98,7 @@ export const OrderItemSchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
   lensSize: z.string().optional(),
+  lensType: z.string().optional(),
   requiresMedicalCertificate: z.boolean().default(false),
 })
 export const ShippingAddressSchema = z.object({
@@ -148,6 +149,7 @@ export const OrderInputSchema = z.object({
   paidAt: z.date().optional(),
   medicalCertificateImage: z.string().optional(),
   prescriptionImage: z.string().optional(),
+  lensType: z.string().optional(),
 })
 // Cart
 
@@ -165,6 +167,7 @@ export const CartSchema = z.object({
   expectedDeliveryDate: z.optional(z.date()),
   medicalCertificateImage: z.optional(z.string()),
   prescriptionImage: z.optional(z.string()),
+  lensType: z.string().optional(),
 })
 
 // USER

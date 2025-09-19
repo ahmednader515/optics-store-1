@@ -59,9 +59,11 @@ export default function CheckoutForm() {
       totalPrice,
       shippingAddress,
       paymentMethod = 'دفع عند الاستلام',
+      lensType,
     },
     setShippingAddress,
     setPaymentMethod,
+    setLensType,
     clearCart,
     cleanupInvalidItems,
     regenerateClientIds,
@@ -80,6 +82,9 @@ export default function CheckoutForm() {
     const requiresCert = items.some(item => item.requiresMedicalCertificate)
     setRequiresMedicalCertificate(requiresCert)
   }, [items])
+
+  // Check if any products are medical glasses
+  const hasMedicalGlasses = items.some(item => item.category === 'النظارات الطبية')
 
 
   const shippingAddressForm = useForm<ShippingAddress>({
@@ -598,6 +603,42 @@ export default function CheckoutForm() {
               </Card>
             </div>
           ) : null}
+
+          {/* Lens Type Input for Medical Glasses */}
+          {hasMedicalGlasses ? (
+            <div className='border-y'>
+              <div className='flex text-primary text-base sm:text-lg font-bold my-2'>
+                <span className='w-6 sm:w-8'>3 </span>
+                <span>نوع العدسة (اختياري)</span>
+              </div>
+              <Card className='lg:mr-8 my-3 sm:my-4'>
+                <CardContent className='p-3 sm:p-4'>
+                  <div className='space-y-4'>
+                    <p className='text-sm text-gray-600'>
+                      يرجى تحديد نوع العدسة المطلوبة للنظارات الطبية في طلبك (هذا الحقل اختياري).
+                    </p>
+                    
+                    <div className='space-y-2'>
+                      <Label htmlFor='lensType' className='text-sm sm:text-base font-medium'>
+                        نوع العدسة
+                      </Label>
+                      <Input
+                        id='lensType'
+                        placeholder='مثال: عدسة أحادية البؤرة، عدسة متعددة البؤر، عدسة تقدمية'
+                        value={lensType || ''}
+                        onChange={(e) => setLensType(e.target.value)}
+                        className='input-mobile'
+                      />
+                      <p className='text-xs text-gray-500'>
+                        يمكنك ترك هذا الحقل فارغاً إذا لم تكن متأكداً من نوع العدسة المطلوبة
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+
           {isPaymentMethodSelected && isAddressSelected && (!requiresMedicalCertificate || medicalCertificateImage) && (
             <div className='mt-4 sm:mt-6'>
               <div className='block lg:hidden'>

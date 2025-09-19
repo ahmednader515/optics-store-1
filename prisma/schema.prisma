@@ -70,7 +70,7 @@ model Product {
   requiresMedicalCertificate Boolean     @default(false)
   deliveryPrice              Decimal     @default(0) @db.Decimal(10, 2)
   deliveryTime               Int         @default(1)
-  subcategory                String?
+  subcategories              String[]    @default([])
   orderItems                 OrderItem[]
   reviews                    Review[]
 
@@ -144,6 +144,7 @@ model Order {
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @updatedAt
   medicalCertificateImage String?
+  lensType                String?
   orderItems              OrderItem[]
   shippingAddress         OrderShippingAddress?
   user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)

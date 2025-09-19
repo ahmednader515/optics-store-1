@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import data from '@/lib/data'
 import { revalidatePath, unstable_cache } from 'next/cache'
-import { formatError } from '../utils'
+import { formatError, toSlug } from '../utils'
 import { ProductInputSchema, ProductUpdateSchema } from '../validator'
 import { IProductInput } from '@/types'
 import { z } from 'zod'
@@ -29,6 +29,28 @@ const setGlobalCachedData = <T>(cacheKey: string, data: T): void => {
   const cache = (global as any).__cache || {}
   cache[cacheKey] = { data, time: Date.now() }
   ;(global as any).__cache = cache
+}
+
+// Function to generate unique slug by checking for duplicates
+async function generateUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
+  let slug = baseSlug
+  let counter = 1
+  
+  while (true) {
+    const existingProduct = await prisma.product.findFirst({
+      where: {
+        slug: slug,
+        ...(excludeId && { id: { not: excludeId } })
+      }
+    })
+    
+    if (!existingProduct) {
+      return slug
+    }
+    
+    slug = `${baseSlug}-${counter}`
+    counter++
+  }
 }
 
 // Centralized cached categories (shared by header and homepage)
@@ -83,12 +105,17 @@ export async function createProduct(data: IProductInput) {
     // Always use database
     
     const { reviews, ...productData } = product
+    
+    // Generate unique slug from product name
+    const baseSlug = productData.slug || toSlug(productData.name)
+    const uniqueSlug = await generateUniqueSlug(baseSlug)
+    
     await prisma.product.create({
       data: {
         name: productData.name,
-        slug: productData.slug,
+        slug: uniqueSlug,
         category: productData.category,
-        subcategory: productData.subcategory,
+        subcategories: productData.subcategories,
         images: productData.images,
         brand: productData.brand,
         description: productData.description,
@@ -126,13 +153,17 @@ export async function updateProduct(data: z.infer<typeof ProductUpdateSchema>) {
     
     const { reviews, _id, ...productData } = product
     
+    // Generate unique slug from product name, excluding current product
+    const baseSlug = productData.slug || toSlug(productData.name)
+    const uniqueSlug = await generateUniqueSlug(baseSlug, _id)
+    
     await prisma.product.update({
       where: { id: _id },
       data: {
         name: productData.name,
-        slug: productData.slug,
+        slug: uniqueSlug,
         category: productData.category,
-        subcategory: productData.subcategory,
+        subcategories: productData.subcategories,
         images: productData.images,
         brand: productData.brand,
         description: productData.description,

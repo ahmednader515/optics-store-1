@@ -121,7 +121,7 @@ async function ProductResults({ params, translations }: {
   }
   
   if (subcategory && subcategory !== 'all') {
-    where.subcategory = subcategory
+    where.subcategories = { has: subcategory }
   }
   
   
@@ -154,6 +154,7 @@ async function ProductResults({ params, translations }: {
       avgRating: true,
       numReviews: true,
       category: true,
+      subcategories: true,
       brand: true,
       description: true,
       countInStock: true,

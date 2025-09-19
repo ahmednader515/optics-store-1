@@ -13,6 +13,7 @@ const initialState: Cart = {
   paymentMethod: undefined,
   shippingAddress: undefined,
   deliveryDateIndex: undefined,
+  lensType: undefined,
 }
 
 interface CartState {
@@ -26,6 +27,7 @@ interface CartState {
   setShippingAddress: (shippingAddress: ShippingAddress) => Promise<void>
   setPaymentMethod: (paymentMethod: string) => void
   setDeliveryDateIndex: (index: number) => Promise<void>
+  setLensType: (lensType: string) => void
 }
 
 const useCartStore = create(
@@ -207,6 +209,14 @@ const useCartStore = create(
               shippingAddress,
               deliveryDateIndex: index,
             })),
+          },
+        })
+      },
+      setLensType: (lensType: string) => {
+        set({
+          cart: {
+            ...get().cart,
+            lensType,
           },
         })
       },

@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
           listPrice: true,
           brand: true,
           category: true,
+          subcategories: true,
           description: true,
           avgRating: true,
           numReviews: true,

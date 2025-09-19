@@ -24,6 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
 import { createProduct, updateProduct } from '@/lib/actions/product.actions'
 import { getAllCategories } from '@/lib/actions/category.actions'
@@ -32,9 +38,9 @@ import { IProductInput } from '@/types'
 import { UploadButton } from '@/lib/uploadthing'
 import { ProductInputSchema, ProductUpdateSchema } from '@/lib/validator'
 import { Checkbox } from '@/components/ui/checkbox'
-import { toSlug } from '@/lib/utils'
 import { useLoading } from '@/hooks/use-loading'
 import { LoadingSpinner } from '@/components/shared/loading-overlay'
+import { ChevronDown } from 'lucide-react'
 
 // Color mapping for Arabic color names to hex values
 const getColorValue = (colorName: string): string => {
@@ -62,7 +68,7 @@ const productDefaultValues: IProductInput = {
   name: '',
   slug: '',
   category: '',
-  subcategory: '',
+  subcategories: [],
   images: [],
   brand: '',
   description: '',
@@ -240,10 +246,10 @@ const ProductForm = ({
     }
   }, [product, type, categories.length])
 
-  // Set subcategory field when product data is available (for edit mode)
+  // Set subcategories field when product data is available (for edit mode)
   useEffect(() => {
-    if (product && type === 'Update' && product.subcategory) {
-      form.setValue('subcategory', product.subcategory)
+    if (product && type === 'Update' && product.subcategories) {
+      form.setValue('subcategories', product.subcategories)
     }
   }, [product, type, form])
 
@@ -254,7 +260,7 @@ const ProductForm = ({
   const { toast } = useToast()
   const onSubmit = async (values: IProductInput) => {
     console.log('Form values being submitted:', values)
-    console.log('Subcategory value:', values.subcategory)
+    console.log('Subcategories value:', values.subcategories)
     
     // Validate that category is selected
     if (!values.category || values.category === '__loading__' || values.category === '__no_categories__') {
@@ -274,10 +280,9 @@ const ProductForm = ({
       return
     }
 
-    // Auto-generate slug from product name
+    // Slug will be auto-generated in the backend to ensure uniqueness
     const productData = {
-      ...values,
-      slug: toSlug(values.name)
+      ...values
     }
 
     await withLoading(
@@ -348,9 +353,7 @@ const ProductForm = ({
                       placeholder='مثال: نظارات شمسية أزرق'
                       onChange={(e) => {
                         field.onChange(e)
-                        // Auto-generate slug when name changes
-                        const slug = toSlug(e.target.value)
-                        form.setValue('slug', slug)
+                        // Slug will be auto-generated in the backend
                       }}
                     />
                   </FormControl>
@@ -427,46 +430,65 @@ const ProductForm = ({
 
             <FormField
               control={form.control}
-              name='subcategory'
+              name='subcategories'
               render={({ field }) => (
                 <FormItem className='w-full'>
-                  <FormLabel className='text-gray-900 font-semibold'>الفئة الفرعية</FormLabel>
+                  <FormLabel className='text-gray-900 font-semibold'>الفئات الفرعية</FormLabel>
                   <FormControl>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value} 
-                      disabled={isLoadingSubcategories || subcategories.length === 0}
-                    >
-                      <SelectTrigger className='border-gray-300 bg-white text-gray-900 focus:border-orange-500 focus:ring-orange-500'>
-                        <SelectValue placeholder={
-                          isLoadingSubcategories 
-                            ? "جاري التحميل..." 
-                            : subcategories.length === 0 
-                              ? "لا توجد فئات فرعية" 
-                              : "اختر فئة فرعية"
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
+                          disabled={isLoadingSubcategories || subcategories.length === 0}
+                        >
+                          <span className="truncate">
+                            {isLoadingSubcategories 
+                              ? "جاري التحميل..." 
+                              : subcategories.length === 0 
+                                ? (selectedCategory ? "لا توجد فئات فرعية" : "يرجى اختيار فئة أولاً")
+                                : field.value && field.value.length > 0 
+                                  ? `تم اختيار ${field.value.length} فئة فرعية`
+                                  : "اختر الفئات الفرعية"
+                            }
+                          </span>
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-full min-w-[200px]" align="start">
                         {isLoadingSubcategories ? (
-                          <SelectItem value="__loading__" disabled>جاري التحميل...</SelectItem>
+                          <div className="px-2 py-1.5 text-sm text-gray-500">جاري التحميل...</div>
                         ) : subcategories.length === 0 ? (
-                          <SelectItem value="__no_subcategories__" disabled>لا توجد فئات فرعية متاحة</SelectItem>
+                          <div className="px-2 py-1.5 text-sm text-gray-500">
+                            {selectedCategory ? "لا توجد فئات فرعية لهذه الفئة" : "يرجى اختيار فئة أولاً"}
+                          </div>
                         ) : (
                           subcategories.map((subcategory) => (
-                            <SelectItem key={subcategory.slug} value={subcategory.name}>
+                            <DropdownMenuCheckboxItem
+                              key={subcategory.slug}
+                              checked={field.value?.includes(subcategory.name) || false}
+                              onCheckedChange={(checked) => {
+                                const currentSubcategories = field.value || []
+                                if (checked) {
+                                  field.onChange([...currentSubcategories, subcategory.name])
+                                } else {
+                                  field.onChange(currentSubcategories.filter(name => name !== subcategory.name))
+                                }
+                              }}
+                              className="text-sm"
+                            >
                               {subcategory.name}
-                            </SelectItem>
+                            </DropdownMenuCheckboxItem>
                           ))
                         )}
-                      </SelectContent>
-                    </Select>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </FormControl>
-                  {subcategories.length === 0 && !isLoadingSubcategories && selectedCategory && (
+                  {field.value && field.value.length > 0 && (
                     <div className="text-sm text-gray-600 mt-2">
-                      <p>لا توجد فئات فرعية لهذه الفئة.</p>
+                      <p>الفئات المختارة: {field.value.join(', ')}</p>
                     </div>
                   )}
-
                   <FormMessage />
                 </FormItem>
               )}
