@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Plus, Trash2, Eye, Monitor, Sun, BookOpen, Heart, Zap } from 'lucide-react'
+import { Plus, Trash2, Eye, Monitor, Sun, BookOpen, Heart, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { getAllCategories } from '@/lib/actions/category.actions'
 
@@ -200,6 +200,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     return createDefaultChatContent([]) // Will be updated when categories load
   })
   const [activeTab, setActiveTab] = useState<'welcome' | 'questions' | 'results'>('welcome')
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   
   // Refs for auto-scrolling
   const questionsContainerRef = useRef<HTMLDivElement>(null)
@@ -247,6 +248,21 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     }
   }, [content]) // Remove onSave from dependencies to prevent infinite loop
 
+  // Reset current question index when switching to questions tab
+  useEffect(() => {
+    if (activeTab === 'questions') {
+      setCurrentQuestionIndex(0)
+    }
+  }, [activeTab])
+
+  // Ensure current question index is within bounds
+  useEffect(() => {
+    const questionsLength = content.questions?.length || 0
+    if (questionsLength > 0 && currentQuestionIndex >= questionsLength) {
+      setCurrentQuestionIndex(Math.max(0, questionsLength - 1))
+    }
+  }, [content.questions?.length, currentQuestionIndex])
+
   // Auto-scroll functions
   const scrollToElement = (element: HTMLElement | null) => {
     if (element) {
@@ -280,7 +296,8 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
       ...prev,
       questions: [...(prev.questions || []), newQuestion]
     }))
-    scrollToLastQuestion()
+    // Navigate to the newly added question
+    setCurrentQuestionIndex((prev.questions || []).length)
   }
 
   const updateQuestion = (index: number, field: keyof ChatQuestion, value: any) => {
@@ -293,10 +310,19 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
   }
 
   const deleteQuestion = (index: number) => {
-    setContent(prev => ({
-      ...prev,
-      questions: (prev.questions || []).filter((_, i) => i !== index)
-    }))
+    setContent(prev => {
+      const newQuestions = (prev.questions || []).filter((_, i) => i !== index)
+      // Adjust current question index if needed
+      if (currentQuestionIndex >= newQuestions.length && newQuestions.length > 0) {
+        setCurrentQuestionIndex(newQuestions.length - 1)
+      } else if (newQuestions.length === 0) {
+        setCurrentQuestionIndex(0)
+      }
+      return {
+        ...prev,
+        questions: newQuestions
+      }
+    })
   }
 
   const addOption = (questionIndex: number) => {
@@ -368,8 +394,8 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     const newKey = `result-${Date.now()}`
     const newResult: ChatResult = {
       category: categories.length > 0 ? categories[0].name : 'فئة جديدة',
-      title: 'عنوان جديد',
-      description: 'وصف جديد',
+      title: 'النظارات المناسبة',
+      description: 'بناءً على إجاباتك، ننصحك بهذه النظارات المناسبة لاحتياجاتك.',
       icon: 'Heart',
       color: 'bg-gray-500',
       url: categories.length > 0 ? `/search?category=${encodeURIComponent(categories[0].name)}` : '/search?category=فئة-جديدة'
@@ -397,6 +423,25 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
   const getIconComponent = (iconName: string) => {
     const iconOption = iconOptions.find(opt => opt.value === iconName)
     return iconOption ? iconOption.icon : <Heart className="w-4 h-4" />
+  }
+
+  // Navigation functions
+  const goToNextQuestion = () => {
+    if (currentQuestionIndex < (content.questions?.length || 0) - 1) {
+      setCurrentQuestionIndex(prev => prev + 1)
+    }
+  }
+
+  const goToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1)
+    }
+  }
+
+  const goToQuestion = (index: number) => {
+    if (index >= 0 && index < (content.questions?.length || 0)) {
+      setCurrentQuestionIndex(index)
+    }
   }
 
   return (
@@ -477,153 +522,258 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
             </Button>
           </div>
 
-          <div ref={questionsContainerRef}>
-            {content.questions && content.questions.length > 0 ? (
-              content.questions.map((question, questionIndex) => (
-              <Card 
-                key={question.id} 
-                className="mb-4"
-                ref={questionIndex === content.questions.length - 1 ? lastAddedQuestionRef : null}
-              >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">سؤال {questionIndex + 1}</CardTitle>
-                  <Button
-                    onClick={() => deleteQuestion(questionIndex)}
-                    variant="destructive"
-                    size="sm"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Question Text */}
-                <div>
-                  <Label htmlFor={`question-${questionIndex}`} className="text-base font-medium">نص السؤال</Label>
-                  <Input
-                    id={`question-${questionIndex}`}
-                    value={question.question}
-                    onChange={(e) => updateQuestion(questionIndex, 'question', e.target.value)}
-                    placeholder="أدخل نص السؤال..."
-                    className="mt-2 text-base"
-                  />
-                </div>
-
-                {/* Answer Options */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <Label className="text-base font-medium">خيارات الإجابة</Label>
-                    <Button onClick={() => addOption(questionIndex)} size="sm" className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="w-4 h-4 mr-2" />
-                      إضافة خيار
+          {content.questions && content.questions.length > 0 ? (
+            <div className="space-y-6">
+              {/* Navigation Controls */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                {/* Mobile Layout */}
+                <div className="block sm:hidden space-y-3">
+                  {/* Question Counter */}
+                  <div className="text-center text-sm text-gray-500">
+                    السؤال {currentQuestionIndex + 1} من {content.questions.length}
+                  </div>
+                  
+                  {/* Question Selector */}
+                  <div className="w-full">
+                    <select
+                      value={currentQuestionIndex}
+                      onChange={(e) => goToQuestion(parseInt(e.target.value))}
+                      className="w-full px-3 py-2 border rounded-md text-sm bg-white"
+                    >
+                      {content.questions.map((_, index) => (
+                        <option key={index} value={index}>
+                          السؤال {index + 1}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Navigation Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={goToPreviousQuestion}
+                      disabled={currentQuestionIndex === 0}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <ChevronRight className="w-4 h-4 mr-1" />
+                      السابق
+                    </Button>
+                    
+                    <Button
+                      onClick={goToNextQuestion}
+                      disabled={currentQuestionIndex === content.questions.length - 1}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      التالي
+                      <ChevronLeft className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
-
-                  <div className="space-y-3">
-                    {question.options?.map((option, optionIndex) => (
-                      <div 
-                        key={option.id} 
-                        className="bg-gray-50 rounded-lg p-4 border"
-                        ref={optionIndex === question.options.length - 1 ? lastAddedOptionRef : null}
+                </div>
+                
+                {/* Desktop Layout */}
+                <div className="hidden sm:flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      onClick={goToPreviousQuestion}
+                      disabled={currentQuestionIndex === 0}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <ChevronRight className="w-4 h-4 mr-1" />
+                      السابق
+                    </Button>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">السؤال</span>
+                      <select
+                        value={currentQuestionIndex}
+                        onChange={(e) => goToQuestion(parseInt(e.target.value))}
+                        className="px-3 py-1 border rounded-md text-sm"
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="font-medium text-gray-700">خيار {optionIndex + 1}</span>
+                        {content.questions.map((_, index) => (
+                          <option key={index} value={index}>
+                            {index + 1}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-sm text-gray-600">من {content.questions.length}</span>
+                    </div>
+                    
+                    <Button
+                      onClick={goToNextQuestion}
+                      disabled={currentQuestionIndex === content.questions.length - 1}
+                      variant="outline"
+                      size="sm"
+                    >
+                      التالي
+                      <ChevronLeft className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                  
+                  <div className="text-sm text-gray-500">
+                    {currentQuestionIndex + 1} / {content.questions.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Question Display */}
+              <div ref={questionsContainerRef}>
+                {(() => {
+                  const question = content.questions[currentQuestionIndex]
+                  const questionIndex = currentQuestionIndex
+                  
+                  return (
+                    <Card 
+                      key={question.id} 
+                      className="mb-4"
+                      ref={questionIndex === content.questions.length - 1 ? lastAddedQuestionRef : null}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">سؤال {questionIndex + 1}</CardTitle>
                           <Button
-                            onClick={() => deleteOption(questionIndex, optionIndex)}
+                            onClick={() => deleteQuestion(questionIndex)}
                             variant="destructive"
                             size="sm"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-
-                        {/* Option Details - Simplified Layout */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor={`option-text-${questionIndex}-${optionIndex}`} className="text-sm">نص الخيار</Label>
-                            <Input
-                              id={`option-text-${questionIndex}-${optionIndex}`}
-                              value={option.text}
-                              onChange={(e) => updateOption(questionIndex, optionIndex, 'text', e.target.value)}
-                              placeholder="أدخل نص الخيار..."
-                              className="mt-1"
-                            />
-                          </div>
-
-                          <div>
-                            <Label htmlFor={`option-icon-${questionIndex}-${optionIndex}`} className="text-sm">الأيقونة</Label>
-                            <select
-                              id={`option-icon-${questionIndex}-${optionIndex}`}
-                              value={option.icon}
-                              onChange={(e) => updateOption(questionIndex, optionIndex, 'icon', e.target.value)}
-                              className="mt-1 w-full p-2 border rounded-md"
-                            >
-                              {iconOptions.map(icon => (
-                                <option key={icon.value} value={icon.value}>
-                                  {icon.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        {/* Question Text */}
+                        <div>
+                          <Label htmlFor={`question-${questionIndex}`} className="text-base font-medium">نص السؤال</Label>
+                          <Input
+                            id={`question-${questionIndex}`}
+                            value={question.question}
+                            onChange={(e) => updateQuestion(questionIndex, 'question', e.target.value)}
+                            placeholder="أدخل نص السؤال..."
+                            className="mt-2 text-base"
+                          />
                         </div>
 
-                        <div className="mt-3">
-                          <Label htmlFor={`option-next-${questionIndex}-${optionIndex}`} className="text-sm">السؤال التالي</Label>
-                          <select
-                            id={`option-next-${questionIndex}-${optionIndex}`}
-                            value={option.nextQuestionId || ''}
-                            onChange={(e) => updateOption(questionIndex, optionIndex, 'nextQuestionId', e.target.value)}
-                            className="mt-1 w-full p-2 border rounded-md"
-                          >
-                            <option value="">اختر السؤال التالي</option>
-                            {content.questions?.filter((q, qIndex) => qIndex !== questionIndex).map((q, qIndex) => (
-                              <option key={q.id} value={q.id}>
-                                {q.question.length > 50 ? q.question.substring(0, 50) + '...' : q.question}
-                              </option>
-                            ))}
-                            <option value="face-upload">تحليل شكل الوجه</option>
-                            <option value="final-result">النتيجة النهائية</option>
-                          </select>
-                        </div>
+                        {/* Answer Options */}
+                        <div>
+                          <div className="flex items-center justify-between mb-4">
+                            <Label className="text-base font-medium">خيارات الإجابة</Label>
+                            <Button onClick={() => addOption(questionIndex)} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                              <Plus className="w-4 h-4 mr-2" />
+                              إضافة خيار
+                            </Button>
+                          </div>
 
-                        {/* Simplified Scoring - Only show if categories are loaded */}
-                        {!isLoadingCategories && categories.length > 0 && (
-                          <div className="mt-3">
-                            <Label className="text-sm font-medium text-gray-600">النقاط</Label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                              {categories.slice(0, 6).map(category => (
-                                <div key={category.slug} className="flex items-center justify-between space-x-3">
-                                  <Label htmlFor={`score-${questionIndex}-${optionIndex}-${category.slug}`} className="text-sm text-gray-700 flex-1">
-                                    {category.name}
-                                  </Label>
-                                  <Input
-                                    id={`score-${questionIndex}-${optionIndex}-${category.slug}`}
-                                    type="number"
-                                    min="0"
-                                    max="3"
-                                    value={option.score[category.slug] || 0}
-                                    onChange={(e) => updateOption(questionIndex, optionIndex, 'score', {
-                                      ...option.score,
-                                      [category.slug]: parseInt(e.target.value) || 0
-                                    })}
-                                    className="w-16 h-8 text-sm"
-                                  />
+                          <div className="space-y-3">
+                            {question.options?.map((option, optionIndex) => (
+                              <div 
+                                key={option.id} 
+                                className="bg-gray-50 rounded-lg p-4 border"
+                                ref={optionIndex === question.options.length - 1 ? lastAddedOptionRef : null}
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="font-medium text-gray-700">خيار {optionIndex + 1}</span>
+                                  <Button
+                                    onClick={() => deleteOption(questionIndex, optionIndex)}
+                                    variant="destructive"
+                                    size="sm"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
                                 </div>
-                              ))}
-                            </div>
-                            {categories.length > 6 && (
-                              <p className="text-xs text-gray-500 mt-1">+ {categories.length - 6} فئات أخرى</p>
-                            )}
+
+                                {/* Option Details - Simplified Layout */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <Label htmlFor={`option-text-${questionIndex}-${optionIndex}`} className="text-sm">نص الخيار</Label>
+                                    <Input
+                                      id={`option-text-${questionIndex}-${optionIndex}`}
+                                      value={option.text}
+                                      onChange={(e) => updateOption(questionIndex, optionIndex, 'text', e.target.value)}
+                                      placeholder="أدخل نص الخيار..."
+                                      className="mt-1"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor={`option-icon-${questionIndex}-${optionIndex}`} className="text-sm">الأيقونة</Label>
+                                    <select
+                                      id={`option-icon-${questionIndex}-${optionIndex}`}
+                                      value={option.icon}
+                                      onChange={(e) => updateOption(questionIndex, optionIndex, 'icon', e.target.value)}
+                                      className="mt-1 w-full p-2 border rounded-md"
+                                    >
+                                      {iconOptions.map(icon => (
+                                        <option key={icon.value} value={icon.value}>
+                                          {icon.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="mt-3">
+                                  <Label htmlFor={`option-next-${questionIndex}-${optionIndex}`} className="text-sm">السؤال التالي</Label>
+                                  <select
+                                    id={`option-next-${questionIndex}-${optionIndex}`}
+                                    value={option.nextQuestionId || ''}
+                                    onChange={(e) => updateOption(questionIndex, optionIndex, 'nextQuestionId', e.target.value)}
+                                    className="mt-1 w-full p-2 border rounded-md"
+                                  >
+                                    <option value="">اختر السؤال التالي</option>
+                                    {content.questions?.filter((q, qIndex) => qIndex !== questionIndex).map((q, qIndex) => (
+                                      <option key={q.id} value={q.id}>
+                                        {q.question.length > 50 ? q.question.substring(0, 50) + '...' : q.question}
+                                      </option>
+                                    ))}
+                                    <option value="face-upload">تحليل شكل الوجه</option>
+                                    <option value="final-result">النتيجة النهائية</option>
+                                  </select>
+                                </div>
+
+                                {/* Simplified Scoring - Only show if categories are loaded */}
+                                {!isLoadingCategories && categories.length > 0 && (
+                                  <div className="mt-3">
+                                    <Label className="text-sm font-medium text-gray-600">النقاط</Label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                                      {categories.slice(0, 6).map(category => (
+                                        <div key={category.slug} className="flex items-center justify-between space-x-3">
+                                          <Label htmlFor={`score-${questionIndex}-${optionIndex}-${category.slug}`} className="text-sm text-gray-700 flex-1">
+                                            {category.name}
+                                          </Label>
+                                          <Input
+                                            id={`score-${questionIndex}-${optionIndex}-${category.slug}`}
+                                            type="number"
+                                            min="0"
+                                            max="3"
+                                            value={option.score[category.slug] || 0}
+                                            onChange={(e) => updateOption(questionIndex, optionIndex, 'score', {
+                                              ...option.score,
+                                              [category.slug]: parseInt(e.target.value) || 0
+                                            })}
+                                            className="w-16 h-8 text-sm"
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                    {categories.length > 6 && (
+                                      <p className="text-xs text-gray-500 mt-1">+ {categories.length - 6} فئات أخرى</p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            ))
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })()}
+              </div>
+            </div>
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
               <div className="mx-auto w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-4">
@@ -637,7 +787,6 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
               </Button>
             </div>
           )}
-          </div>
         </div>
       )}
 

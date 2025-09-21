@@ -17,6 +17,7 @@ interface SearchPageProps {
     sort?: string
     page?: string
     tag?: string | string[]
+    glassesShape?: string
   }>
 }
 
@@ -103,6 +104,7 @@ async function ProductResults({ params, translations }: {
     subcategory = '',
     sort = 'newest',
     page = '1',
+    glassesShape = '',
   } = params
 
   const currentPage = parseInt(page)
@@ -124,7 +126,18 @@ async function ProductResults({ params, translations }: {
     where.subcategories = { has: subcategory }
   }
   
+  if (glassesShape && glassesShape !== 'all') {
+    where.glassesShape = glassesShape
+  }
   
+  console.log('Search filters applied:', { q, category, subcategory, glassesShape })
+  console.log('Where clause:', where)
+  
+  // Debug: Check if glassesShape filter is working
+  if (glassesShape && glassesShape !== 'all') {
+    console.log('Filtering by glassesShape:', glassesShape)
+    console.log('Where clause with glassesShape:', where)
+  }
 
   // Build order by clause
   let orderBy: any = { createdAt: 'desc' }
@@ -164,6 +177,7 @@ async function ProductResults({ params, translations }: {
       numSales: true,
       isPublished: true,
       lensSizes: true,
+      glassesShape: true,
       requiresMedicalCertificate: true,
       deliveryPrice: true,
       deliveryTime: true,
@@ -171,6 +185,13 @@ async function ProductResults({ params, translations }: {
   })
   
   const totalProducts = await (prisma as any).product.count({ where })
+  
+  console.log('Total products found:', totalProducts)
+  console.log('Products found:', products.length)
+  if (products.length > 0) {
+    console.log('First product glassesShape:', products[0].glassesShape)
+    console.log('All products glassesShape:', products.map(p => ({ name: p.name, glassesShape: p.glassesShape })))
+  }
 
   // Convert Decimal values to numbers for client components and ensure all required fields
   const normalizedProducts = products.map((product: any) => ({
@@ -323,6 +344,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     q = '',
     category = '',
     subcategory = '',
+    glassesShape = '',
   } = params
 
   if (!q && !category && !subcategory) {

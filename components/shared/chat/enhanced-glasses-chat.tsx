@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast'
 import { getProductsByFaceShape } from '@/lib/actions/chat.actions'
 import { getRecommendedGlassesShape, faceShapeDescriptions } from '@/lib/face-shape-mapping'
 import Image from 'next/image'
+import ProductCard from '@/components/shared/product/product-card'
 
 // Icon options for chat
 const iconOptions = [
@@ -302,6 +303,7 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
   } | null>(null)
   const [recommendedProduct, setRecommendedProduct] = useState<any>(null)
   const [isLoadingProduct, setIsLoadingProduct] = useState(false)
+  const [hasProductsWithExactShape, setHasProductsWithExactShape] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
@@ -377,20 +379,16 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
     if (option.score) {
       const newScores = { ...scores }
       Object.keys(option.score).forEach(category => {
-        newScores[category] += option.score![category]
+        const currentScore = isNaN(Number(newScores[category])) ? 0 : Number(newScores[category])
+        const optionScore = isNaN(Number(option.score![category])) ? 0 : Number(option.score![category])
+        newScores[category] = currentScore + optionScore
       })
+      console.log('Updated scores:', newScores)
       setScores(newScores)
     }
 
-    // Add bot response
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: `bot-response-${Date.now()}`,
-        type: 'bot',
-        content: 'شكراً لك! دعني أسألك سؤالاً آخر.',
-        timestamp: new Date()
-      }])
-    }, 500)
+    // Debug logging
+    console.log('Option selected:', option.text, 'nextQuestionId:', option.nextQuestionId)
 
     // Move to next question or handle special cases
     if (option.nextQuestionId === 'face-upload') {
@@ -407,57 +405,81 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
       setTimeout(() => {
         showFinalResult()
       }, 1000)
-    } else if (option.nextQuestionId === 'final-result') {
-      // Always show face detection before final result
+    } else if (option.nextQuestionId === 'final-result' || option.nextQuestionId === 'النتيجة النهائية') {
+      // Go directly to final result
+      console.log('Going to final result')
+      setTimeout(() => {
+        showFinalResult()
+      }, 1000)
+    } else if (option.nextQuestionId === 'product-display') {
+      // Handle product display - redirect to search page with category and face shape filters
+      console.log('Product display button clicked!')
+      console.log('Current scores:', scores)
+      console.log('Face shape result:', faceShapeResult)
+      
+      // Fix NaN scores by ensuring all values are numbers
+      const cleanScores = Object.fromEntries(
+        Object.entries(scores).map(([key, value]) => [key, isNaN(Number(value)) ? 0 : Number(value)])
+      )
+      
+      const maxScore = Math.max(...Object.values(cleanScores))
+      const resultCategory = Object.keys(cleanScores).find(category => cleanScores[category] === maxScore) || 'medical'
+      const categoryName = getCategoryName(resultCategory)
+      
+      console.log('Clean scores:', cleanScores)
+      console.log('Max score:', maxScore, 'Result category:', resultCategory)
+      console.log('Category name:', categoryName)
+      console.log('Category name encoded:', encodeURIComponent(categoryName))
+      
+      // Build search URL with category filter
+      let searchUrl = `/search?category=${encodeURIComponent(categoryName)}`
+      
+      // Add face shape filter if available
+      if (faceShapeResult && faceShapeResult.faceShape && hasProductsWithExactShape) {
+        const recommendedShape = getRecommendedGlassesShape(faceShapeResult.faceShape)
+        console.log('Face shape:', faceShapeResult.faceShape, 'Recommended shape:', recommendedShape)
+        
+        // Use English shape names directly since that's what's stored in the database
+        searchUrl += `&glassesShape=${encodeURIComponent(recommendedShape)}`
+        console.log('Added face shape filter (English):', recommendedShape)
+        console.log('Full search URL being generated:', searchUrl)
+      } else {
+        console.log('Not adding glasses shape filter - hasProductsWithExactShape:', hasProductsWithExactShape)
+      }
+      
+      console.log('Final search URL:', searchUrl)
+      
+      // Open in new tab
+      try {
+        window.open(searchUrl, '_blank')
+        console.log('Successfully opened search URL')
+      } catch (error) {
+        console.error('Error opening search URL:', error)
+        // Fallback: try to navigate in same tab
+        window.location.href = searchUrl
+      }
+    } else if (option.nextQuestionId === 'restart') {
+      // Restart the chat
+      resetChat()
+    } else if (option.nextQuestionId) {
+      // Add bot response for regular questions
       setTimeout(() => {
         setMessages(prev => [...prev, {
-          id: `face-shape-question-${Date.now()}`,
+          id: `bot-response-${Date.now()}`,
           type: 'bot',
-          content: 'لإعطائك توصيات أكثر دقة، هل تريد تحليل شكل وجهك لاختيار شكل النظارات المناسب؟',
-          timestamp: new Date(),
-          options: [
-            {
-              id: 'analyze-face',
-              text: 'نعم، أريد تحليل شكل وجهي',
-              icon: <Camera className="w-4 h-4" />,
-              nextQuestionId: 'face-upload'
-            },
-            {
-              id: 'skip-face-analysis',
-              text: 'لا، أريد التوصية العامة',
-              icon: <ArrowRight className="w-4 h-4" />,
-              nextQuestionId: 'skip-face'
-            }
-          ]
+          content: 'شكراً لك! دعني أسألك سؤالاً آخر.',
+          timestamp: new Date()
         }])
-      }, 1000)
-    } else if (option.nextQuestionId) {
+      }, 500)
+      
       setTimeout(() => {
         askQuestion(option.nextQuestionId)
       }, 1000)
     } else {
-      // If no next question is specified, show face detection before final result
+      // If no next question is specified, show final result directly
+      console.log('No nextQuestionId specified, showing final result')
       setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: `face-shape-question-${Date.now()}`,
-          type: 'bot',
-          content: 'لإعطائك توصيات أكثر دقة، هل تريد تحليل شكل وجهك لاختيار شكل النظارات المناسب؟',
-          timestamp: new Date(),
-          options: [
-            {
-              id: 'analyze-face',
-              text: 'نعم، أريد تحليل شكل وجهي',
-              icon: <Camera className="w-4 h-4" />,
-              nextQuestionId: 'face-upload'
-            },
-            {
-              id: 'skip-face-analysis',
-              text: 'لا، أريد التوصية العامة',
-              icon: <ArrowRight className="w-4 h-4" />,
-              nextQuestionId: 'skip-face'
-            }
-          ]
-        }])
+        showFinalResult()
       }, 1000)
     }
   }
@@ -500,10 +522,19 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
     try {
       const maxScore = Math.max(...Object.values(scores))
       const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
+      const categoryName = getCategoryName(resultCategory)
+      
+      console.log('=== Chat Face Shape Debug ===')
+      console.log('Scores:', scores)
+      console.log('Max score:', maxScore)
+      console.log('Result category slug:', resultCategory)
+      console.log('Category name (Arabic):', categoryName)
+      console.log('Face shape from result:', result.faceShape)
+      console.log('=== End Chat Debug ===')
       
       const productResult = await getProductsByFaceShape({
         faceShape: result.faceShape,
-        category: resultCategory,
+        category: categoryName, // Use the Arabic category name
         limit: 1 // Only get one product
       })
 
@@ -511,19 +542,37 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
         const product = productResult.products[0]
         setRecommendedProduct(product)
         
+        // Check if this is a fallback result (no exact glasses shape match)
+        const isFallback = productResult.isFallback || false
+        setHasProductsWithExactShape(!isFallback) // Set to true only if NOT a fallback
+        
+        const messageContent = isFallback 
+          ? `لم نجد نظارات بالشكل المثالي لوجهك، لكن إليك أفضل خيار متاح في هذه الفئة:`
+          : `إليك النظارة المثالية لك بناءً على شكل وجهك واحتياجاتك:`
+        
         setTimeout(() => {
           setMessages(prev => [...prev, {
             id: 'recommended-product',
             type: 'bot',
-            content: `إليك النظارة المثالية لك بناءً على شكل وجهك واحتياجاتك:`,
+            content: messageContent,
             timestamp: new Date(),
             product: product,
             faceShape: result.faceShape,
             recommendedShape: productResult.recommendedShape,
-            category: resultCategory
+            category: resultCategory,
+            isFallback: isFallback
           }])
         }, 3000)
+        
+        // Show the final result with product recommendations
+        setTimeout(() => {
+          showFinalResult()
+        }, 4000)
       } else {
+        // No products found with the exact glasses shape
+        setHasProductsWithExactShape(false)
+        
+        // Only show "no products found" if there are actually no products
         setTimeout(() => {
           setMessages(prev => [...prev, {
             id: 'no-product-found',
@@ -535,7 +584,7 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
                 id: 'view-all-products',
                 text: 'عرض جميع المنتجات',
                 icon: <ArrowRight className="w-4 h-4" />,
-                nextQuestionId: 'final-result'
+                nextQuestionId: 'view-all-products-search'
               }
             ]
           }])
@@ -549,14 +598,14 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
           type: 'bot',
           content: `حدث خطأ في تحميل المنتج. يمكنك تصفح جميع المنتجات المتاحة.`,
           timestamp: new Date(),
-          options: [
-            {
-              id: 'view-all-products',
-              text: 'عرض جميع المنتجات',
-              icon: <ArrowRight className="w-4 h-4" />,
-              nextQuestionId: 'final-result'
-            }
-          ]
+            options: [
+              {
+                id: 'view-all-products',
+                text: 'عرض جميع المنتجات',
+                icon: <ArrowRight className="w-4 h-4" />,
+                nextQuestionId: 'view-all-products-search'
+              }
+            ]
         }])
       }, 3000)
     } finally {
@@ -585,40 +634,94 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
   }
 
   const showFinalResult = () => {
-    const maxScore = Math.max(...Object.values(scores))
-    const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
-    const result = results[resultCategory]
+    console.log('showFinalResult called, scores:', scores)
+    console.log('Available results:', results)
+    console.log('Results keys:', Object.keys(results))
+    console.log('Results values:', Object.values(results))
+    
+    // Fix NaN scores by ensuring all values are numbers
+    const cleanScores = Object.fromEntries(
+      Object.entries(scores).map(([key, value]) => [key, isNaN(Number(value)) ? 0 : Number(value)])
+    )
+    console.log('Clean scores:', cleanScores)
+    
+    const maxScore = Math.max(...Object.values(cleanScores))
+    const resultCategory = Object.keys(cleanScores).find(category => cleanScores[category] === maxScore) || 'medical'
+    console.log('Max score:', maxScore, 'Result category:', resultCategory)
+    
+    // Try to find result by category first
+    let result = results[resultCategory]
+    console.log('Result by category key:', result)
+    
+    // If result is undefined, try to find by category name in the results
+    if (!result) {
+      console.log('Result not found by category, searching by category name...')
+      const availableResults = Object.values(results)
+      const categoryName = getCategoryName(resultCategory)
+      console.log('Looking for category name:', categoryName)
+      console.log('Available results to search:', availableResults)
+      
+      result = availableResults.find(r => r && r.category === categoryName)
+      console.log('Found result by category name:', result)
+    }
+    
+    // If still no result, try to get any available result
+    if (!result) {
+      console.log('Result not found, trying fallback...')
+      const availableResults = Object.values(results).filter(r => r && Object.keys(r).length > 0)
+      console.log('Available results for fallback:', availableResults)
+      
+      if (availableResults.length > 0) {
+        result = availableResults[0]
+        console.log('Using fallback result:', result)
+      }
+    }
+    
+    // If still no result, create a default one based on the category
+    if (!result) {
+      console.log('No result found, creating default result')
+      const categoryName = getCategoryName(resultCategory)
+      
+      // Build search URL with face shape filter if available
+      let searchUrl = `/search?category=${encodeURIComponent(categoryName)}`
+      if (faceShapeResult && faceShapeResult.faceShape && hasProductsWithExactShape) {
+        const recommendedShape = getRecommendedGlassesShape(faceShapeResult.faceShape)
+        searchUrl += `&glassesShape=${encodeURIComponent(recommendedShape)}`
+      }
+      
+      result = {
+        title: categoryName,
+        description: `بناءً على إجاباتك، ننصحك بـ ${categoryName} المناسبة لاحتياجاتك.`,
+        category: categoryName,
+        url: searchUrl
+      }
+      console.log('Created default result:', result)
+    }
 
     if (result) {
+      showResultMessage(result)
+    } else {
+      // If no result found, show a generic message
+      console.log('No result found, showing generic message')
       setTimeout(() => {
         setMessages(prev => [...prev, {
           id: 'final-result',
           type: 'bot',
-          content: `بناءً على إجاباتك، أعتقد أن ${result.title} سيكون الخيار الأمثل لك!`,
+          content: 'بناءً على إجاباتك، سأساعدك في العثور على النظارات المناسبة لك!',
           timestamp: new Date()
         }])
       }, 1000)
-
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: 'final-result-details',
-          type: 'bot',
-          content: result.description,
-          timestamp: new Date()
-        }])
-      }, 2000)
-
-      // Show single product recommendation
+      
       setTimeout(() => {
         setMessages(prev => [...prev, {
           id: 'final-product-recommendation',
           type: 'bot',
-          content: 'إليك النظارة المثالية لك:',
+          content: 'إليك بعض التوصيات العامة:',
           timestamp: new Date(),
           options: [
             {
-              id: 'view-product',
-              text: 'عرض المنتج المقترح',
+              id: 'view-products',
+              text: 'عرض المنتجات المقترحة',
               icon: <ArrowRight className="w-4 h-4" />,
               nextQuestionId: 'product-display'
             },
@@ -629,6 +732,90 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
               nextQuestionId: 'restart'
             }
           ]
+        }])
+      }, 2000)
+      
+      setIsComplete(true)
+    }
+  }
+
+  const getCategoryName = (categorySlug: string): string => {
+    const categoryMap: { [key: string]: string } = {
+      'computer': 'النظارات الطبية',
+      'reading': 'النظارات الطبية', 
+      'sunglasses': 'النظارات الشمسية',
+      'medical': 'النظارات الطبية',
+      'contact': 'العدسات اللاصقة',
+      'care': 'مستلزمات العناية'
+    }
+    return categoryMap[categorySlug] || 'النظارات الطبية'
+  }
+
+  const showResultMessage = (result: any) => {
+    if (result) {
+      console.log('showResultMessage called with result:', result)
+      
+      // Clean up the result properties and check for placeholder values
+      const isPlaceholderTitle = result.title === 'عنوان جديد' || result.title === 'عنوان جديد' || 
+                                !result.title || result.title.trim() === ''
+      const isPlaceholderDescription = result.description === 'تبحث عن الفريم وشمبر ام العدسات' ||
+                                      result.description === 'تبحث عن الفريم وشمبر ام العدسة' ||
+                                      result.description === 'وصف جديد' ||
+                                      !result.description || result.description.trim() === ''
+      
+      const resultTitle = !isPlaceholderTitle ? result.title : 
+                         result.category && result.category.trim() !== '' ? result.category : 
+                         'النظارات المناسبة'
+      
+      const resultDescription = !isPlaceholderDescription ? result.description : 
+                               `بناءً على إجاباتك، ننصحك بـ ${resultTitle} المناسبة لاحتياجاتك.`
+      
+      console.log('Processed title:', resultTitle, 'Description:', resultDescription)
+      
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: 'final-result',
+          type: 'bot',
+          content: `بناءً على إجاباتك، أعتقد أن ${resultTitle} سيكون الخيار الأمثل لك!`,
+          timestamp: new Date()
+        }])
+      }, 1000)
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: 'final-result-details',
+          type: 'bot',
+          content: resultDescription,
+          timestamp: new Date()
+        }])
+      }, 2000)
+
+      // Show single product recommendation
+      setTimeout(() => {
+        const options = []
+        
+        // Always add view products option with proper URL
+        options.push({
+          id: 'view-products',
+          text: 'عرض المنتجات المقترحة',
+          icon: <ArrowRight className="w-4 h-4" />,
+          nextQuestionId: 'product-display'
+        })
+        
+        // Add restart option
+        options.push({
+          id: 'restart',
+          text: 'أريد إعادة الاختبار',
+          icon: <MessageCircle className="w-4 h-4" />,
+          nextQuestionId: 'restart'
+        })
+        
+        setMessages(prev => [...prev, {
+          id: 'final-product-recommendation',
+          type: 'bot',
+          content: 'إليك النظارة المثالية لك:',
+          timestamp: new Date(),
+          options: options
         }])
       }, 3000)
     }
@@ -712,12 +899,52 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
       setTimeout(() => {
         showFinalResult()
       }, 500)
-    } else if (option.id === 'view-product') {
-      const maxScore = Math.max(...Object.values(scores))
-      const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
-      const result = results[resultCategory]
+    } else if (option.id === 'view-product' || option.id === 'view-products') {
+      console.log('Product display button clicked in handleResultAction!')
+      console.log('Current scores:', scores)
+      console.log('Face shape result:', faceShapeResult)
       
-      window.open(result?.url || '/search', '_blank')
+      // Fix NaN scores by ensuring all values are numbers
+      const cleanScores = Object.fromEntries(
+        Object.entries(scores).map(([key, value]) => [key, isNaN(Number(value)) ? 0 : Number(value)])
+      )
+      
+      const maxScore = Math.max(...Object.values(cleanScores))
+      const resultCategory = Object.keys(cleanScores).find(category => cleanScores[category] === maxScore) || 'medical'
+      const categoryName = getCategoryName(resultCategory)
+      
+      console.log('Clean scores:', cleanScores)
+      console.log('Max score:', maxScore, 'Result category:', resultCategory)
+      console.log('Category name:', categoryName)
+      console.log('Category name encoded:', encodeURIComponent(categoryName))
+      
+      // Build search URL with category filter
+      let searchUrl = `/search?category=${encodeURIComponent(categoryName)}`
+      
+      // Add face shape filter if available
+      if (faceShapeResult && faceShapeResult.faceShape && hasProductsWithExactShape) {
+        const recommendedShape = getRecommendedGlassesShape(faceShapeResult.faceShape)
+        console.log('Face shape:', faceShapeResult.faceShape, 'Recommended shape:', recommendedShape)
+        
+        // Use English shape names directly since that's what's stored in the database
+        searchUrl += `&glassesShape=${encodeURIComponent(recommendedShape)}`
+        console.log('Added face shape filter (English):', recommendedShape)
+        console.log('Full search URL being generated:', searchUrl)
+      } else {
+        console.log('Not adding glasses shape filter - hasProductsWithExactShape:', hasProductsWithExactShape)
+      }
+      
+      console.log('Final search URL:', searchUrl)
+      
+      // Open in new tab
+      try {
+        window.open(searchUrl, '_blank')
+        console.log('Successfully opened search URL')
+      } catch (error) {
+        console.error('Error opening search URL:', error)
+        // Fallback: try to navigate in same tab
+        window.location.href = searchUrl
+      }
       
       setMessages(prev => [...prev, {
         id: `user-action-${Date.now()}`,
@@ -736,12 +963,32 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
       }, 500)
     } else if (option.id === 'restart') {
       resetChat()
-    } else if (option.id === 'view-all-products') {
-      const maxScore = Math.max(...Object.values(scores))
-      const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
-      const result = results[resultCategory]
+    } else if (option.id === 'view-all-products' || option.id === 'view-all-products-search') {
+      console.log('View all products button clicked!')
       
-      window.open(result?.url || '/search', '_blank')
+      // Get the category from scores and convert to proper category name
+      const cleanScores = Object.fromEntries(
+        Object.entries(scores).map(([key, value]) => [key, isNaN(Number(value)) ? 0 : Number(value)])
+      )
+      const maxScore = Math.max(...Object.values(cleanScores))
+      const resultCategory = Object.keys(cleanScores).find(category => cleanScores[category] === maxScore) || 'medical'
+      const categoryName = getCategoryName(resultCategory)
+      
+      // Build search URL with category filter only (no glasses shape filter)
+      const searchUrl = `/search?category=${encodeURIComponent(categoryName)}`
+      
+      console.log('Scores:', cleanScores)
+      console.log('Max score:', maxScore, 'Result category:', resultCategory)
+      console.log('Category name:', categoryName)
+      console.log('Opening search page for category:', categoryName, 'URL:', searchUrl)
+      
+      try {
+        window.open(searchUrl, '_blank')
+        console.log('Successfully opened search URL')
+      } catch (error) {
+        console.error('Error opening search URL:', error)
+        window.location.href = searchUrl
+      }
       
       setMessages(prev => [...prev, {
         id: `user-action-${Date.now()}`,
@@ -918,71 +1165,70 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
 
                       {/* Single Product Display */}
                       {message.product && (
-                        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <div className="mt-4">
                           <div className="flex items-center gap-2 mb-3">
                             <CheckCircle className="h-5 w-5 text-green-600" />
                             <span className="font-semibold text-gray-900">التوصية المثالية لك</span>
                           </div>
-                          
-                          <div className="flex gap-4">
-                            <div className="relative w-20 h-20 flex-shrink-0">
-                              <Image
-                                src={message.product.image || '/images/placeholder.jpg'}
-                                alt={message.product.name}
-                                fill
-                                className="object-cover rounded-lg"
-                              />
-                            </div>
+                          <div className="w-full [&_.sale-badge]:text-xs [&_.sale-badge]:px-1 [&_.sale-badge]:py-0.5 [&_.rating]:text-xs [&_.rating]:gap-0.5 [&_.product-card]:w-full">
+                            <ProductCard
+                              product={{
+                                ...message.product,
+                                id: message.product.id || message.product.slug,
+                                images: message.product.images || [message.product.image || '/images/placeholder.jpg'],
+                                price: Number(message.product.price),
+                                listPrice: Number(message.product.listPrice || message.product.price),
+                                avgRating: Number(message.product.avgRating || 0),
+                                numReviews: Number(message.product.numReviews || 0),
+                                countInStock: 10, // Set to 10 to avoid "out of stock" display
+                                brand: message.product.brand || '',
+                                category: message.category || '',
+                                subcategories: message.product.subcategories || [],
+                                colors: message.product.colors || [],
+                                sizes: message.product.sizes || [],
+                                tags: message.product.tags || [],
+                                description: message.product.description || '',
+                                slug: message.product.slug || '',
+                                name: message.product.name || '',
+                                isPublished: true,
+                                numSales: Number(message.product.numSales || 0),
+                                requiresMedicalCertificate: message.product.requiresMedicalCertificate || false,
+                                deliveryPrice: Number(message.product.deliveryPrice || 0),
+                                deliveryTime: Number(message.product.deliveryTime || 1),
+                                lensSizes: message.product.lensSizes || [],
+                                glassesShape: message.product.glassesShape || '',
+                                createdAt: new Date(),
+                                updatedAt: new Date()
+                              }}
+                              hideAddToCart={true}
+                              hideBorder={false}
+                              horizontalLayout={true}
+                            />
                             
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-sm line-clamp-2">
-                                {message.product.name}
-                              </h4>
-                              <p className="text-xs text-gray-600 mt-1">
-                                {message.category}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="text-lg font-bold text-primary">
-                                  ${message.product.price}
-                                </span>
-                                {message.product.listPrice && message.product.listPrice > message.product.price && (
-                                  <span className="text-sm text-gray-500 line-through">
-                                    ${message.product.listPrice}
-                                  </span>
-                                )}
-                              </div>
-                              {message.product.avgRating && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <div className="flex text-yellow-400">
-                                    {[...Array(5)].map((_, i) => (
-                                      <span key={i} className="text-xs">
-                                        {i < Math.floor(message.product.avgRating) ? '★' : '☆'}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <span className="text-xs text-gray-600">
-                                    ({message.product.numReviews || 0})
-                                  </span>
-                                </div>
-                              )}
+                            {/* Custom Action Buttons */}
+                            <div className="mt-3 flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1 text-xs"
+                                onClick={() => window.open(`/product/${message.product.slug}`, '_blank')}
+                              >
+                                عرض المنتج
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 text-xs"
+                                onClick={() => {
+                                  const maxScore = Math.max(...Object.values(scores))
+                                  const resultCategory = Object.keys(scores).find(category => scores[category] === maxScore) || 'medical'
+                                  const categoryName = getCategoryName(resultCategory)
+                                  const searchUrl = `/search?category=${encodeURIComponent(categoryName)}&glassesShape=${encodeURIComponent(message.product.glassesShape || '')}`
+                                  window.open(searchUrl, '_blank')
+                                }}
+                              >
+                                تصفح المزيد
+                              </Button>
                             </div>
-                          </div>
-                          
-                          <div className="mt-3 flex gap-2">
-                            <Button
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => window.open(`/product/${message.product.slug}`, '_blank')}
-                            >
-                              عرض المنتج
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => window.open(`/search?category=${encodeURIComponent(message.category)}`, '_blank')}
-                            >
-                              تصفح المزيد
-                            </Button>
                           </div>
                         </div>
                       )}
@@ -1004,17 +1250,17 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
                               key={option.id}
                               variant={message.type === 'bot' ? 'outline' : 'secondary'}
                               size="sm"
-                              className="w-full justify-start text-xs h-auto p-2"
+                              className="w-full justify-start text-xs sm:text-sm h-auto p-2 sm:p-3 min-h-[44px] break-words whitespace-normal text-right"
                               onClick={() => {
-                                if (isComplete) {
+                                if (isComplete || option.id === 'view-all-products' || option.id === 'view-all-products-search') {
                                   handleResultAction(option)
                                 } else {
                                   handleOptionSelect(option)
                                 }
                               }}
                             >
-                              <span className="ml-2">{option.icon}</span>
-                              {option.text}
+                              <span className="ml-2 flex-shrink-0">{option.icon}</span>
+                              <span className="flex-1 text-right leading-relaxed">{option.text}</span>
                             </Button>
                           ))}
                         </div>
