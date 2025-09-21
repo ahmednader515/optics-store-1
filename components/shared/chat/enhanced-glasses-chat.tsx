@@ -412,51 +412,66 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
         showFinalResult()
       }, 1000)
     } else if (option.nextQuestionId === 'product-display') {
-      // Handle product display - redirect to search page with category and face shape filters
+      // Handle product display - redirect to search page using the selected result's URL
       console.log('Product display button clicked!')
       console.log('Current scores:', scores)
       console.log('Face shape result:', faceShapeResult)
       
-      // Fix NaN scores by ensuring all values are numbers
+      // Get the selected result based on current scores
       const cleanScores = Object.fromEntries(
         Object.entries(scores).map(([key, value]) => [key, isNaN(Number(value)) ? 0 : Number(value)])
       )
       
       const maxScore = Math.max(...Object.values(cleanScores))
       const resultCategory = Object.keys(cleanScores).find(category => cleanScores[category] === maxScore) || 'medical'
-      const categoryName = getCategoryName(resultCategory)
       
-      console.log('Clean scores:', cleanScores)
-      console.log('Max score:', maxScore, 'Result category:', resultCategory)
-      console.log('Category name:', categoryName)
-      console.log('Category name encoded:', encodeURIComponent(categoryName))
+      // Find the result using the same logic as showFinalResult
+      let selectedResult = results[resultCategory]
       
-      // Build search URL with category filter
-      let searchUrl = `/search?category=${encodeURIComponent(categoryName)}`
-      
-      // Add face shape filter if available
-      if (faceShapeResult && faceShapeResult.faceShape && hasProductsWithExactShape) {
-        const recommendedShape = getRecommendedGlassesShape(faceShapeResult.faceShape)
-        console.log('Face shape:', faceShapeResult.faceShape, 'Recommended shape:', recommendedShape)
-        
-        // Use English shape names directly since that's what's stored in the database
-        searchUrl += `&glassesShape=${encodeURIComponent(recommendedShape)}`
-        console.log('Added face shape filter (English):', recommendedShape)
-        console.log('Full search URL being generated:', searchUrl)
-      } else {
-        console.log('Not adding glasses shape filter - hasProductsWithExactShape:', hasProductsWithExactShape)
+      if (!selectedResult) {
+        const availableResults = Object.values(results)
+        const categoryName = getCategoryName(resultCategory)
+        selectedResult = availableResults.find(r => r && r.category === categoryName)
       }
       
-      console.log('Final search URL:', searchUrl)
+      if (!selectedResult) {
+        const availableResults = Object.values(results)
+        selectedResult = availableResults[0] // Fallback to first available result
+      }
       
-      // Open in new tab
-      try {
-        window.open(searchUrl, '_blank')
-        console.log('Successfully opened search URL')
-      } catch (error) {
-        console.error('Error opening search URL:', error)
-        // Fallback: try to navigate in same tab
-        window.location.href = searchUrl
+      console.log('Selected result for product display:', selectedResult)
+      
+      if (selectedResult && selectedResult.url) {
+        let searchUrl = selectedResult.url
+        
+        // Add face shape filter if available
+        if (faceShapeResult && faceShapeResult.faceShape && hasProductsWithExactShape) {
+          const recommendedShape = getRecommendedGlassesShape(faceShapeResult.faceShape)
+          console.log('Face shape:', faceShapeResult.faceShape, 'Recommended shape:', recommendedShape)
+          
+          // Add face shape filter to the URL
+          const separator = searchUrl.includes('?') ? '&' : '?'
+          searchUrl += `${separator}glassesShape=${encodeURIComponent(recommendedShape)}`
+          console.log('Added face shape filter:', recommendedShape)
+        }
+        
+        console.log('Final search URL:', searchUrl)
+        
+        // Open in new tab
+        try {
+          window.open(searchUrl, '_blank')
+          console.log('Successfully opened search URL')
+        } catch (error) {
+          console.error('Error opening search URL:', error)
+          // Fallback: try to navigate in same tab
+          window.location.href = searchUrl
+        }
+      } else {
+        console.error('No result found for product display')
+        toast({
+          variant: 'destructive',
+          description: 'عذراً، لم يتم العثور على منتجات للعرض',
+        })
       }
     } else if (option.nextQuestionId === 'restart') {
       // Restart the chat
@@ -634,15 +649,29 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
   }
 
   const showFinalResult = () => {
-    console.log('showFinalResult called, scores:', scores)
+    console.log('=== showFinalResult called ===')
+    console.log('Current scores:', scores)
     console.log('Available results:', results)
     console.log('Results keys:', Object.keys(results))
     console.log('Results values:', Object.values(results))
+    
+    // Debug: Show detailed result mapping
+    console.log('=== Detailed Result Mapping ===')
+    Object.entries(results).forEach(([key, result]) => {
+      console.log(`Result key: "${key}" -> Category: "${result?.category}" -> Title: "${result?.title}"`)
+    })
     
     // Fix NaN scores by ensuring all values are numbers
     const cleanScores = Object.fromEntries(
       Object.entries(scores).map(([key, value]) => [key, isNaN(Number(value)) ? 0 : Number(value)])
     )
+    
+    // Debug: Show what getCategoryName returns for each scored category
+    console.log('=== Category Name Mapping Debug ===')
+    Object.keys(cleanScores).forEach(category => {
+      const categoryName = getCategoryName(category)
+      console.log(`Category slug: "${category}" -> Category name: "${categoryName}"`)
+    })
     console.log('Clean scores:', cleanScores)
     
     const maxScore = Math.max(...Object.values(cleanScores))
@@ -663,6 +692,22 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
       
       result = availableResults.find(r => r && r.category === categoryName)
       console.log('Found result by category name:', result)
+    }
+    
+    // If still no result, try to find by partial category name match
+    if (!result) {
+      console.log('Result not found by exact category name, trying partial match...')
+      const availableResults = Object.values(results)
+      const categoryName = getCategoryName(resultCategory)
+      
+      // Try to find a result that contains the category name or vice versa
+      result = availableResults.find(r => {
+        if (!r || !r.category) return false
+        const resultCategory = r.category.toLowerCase()
+        const searchCategory = categoryName.toLowerCase()
+        return resultCategory.includes(searchCategory) || searchCategory.includes(resultCategory)
+      })
+      console.log('Found result by partial match:', result)
     }
     
     // If still no result, try to get any available result
@@ -699,6 +744,10 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
     }
 
     if (result) {
+      console.log('=== FINAL RESULT SELECTED ===')
+      console.log('Selected result:', result)
+      console.log('Result title:', result.title)
+      console.log('Result category:', result.category)
       showResultMessage(result)
     } else {
       // If no result found, show a generic message
@@ -904,46 +953,61 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
       console.log('Current scores:', scores)
       console.log('Face shape result:', faceShapeResult)
       
-      // Fix NaN scores by ensuring all values are numbers
+      // Get the selected result based on current scores
       const cleanScores = Object.fromEntries(
         Object.entries(scores).map(([key, value]) => [key, isNaN(Number(value)) ? 0 : Number(value)])
       )
       
       const maxScore = Math.max(...Object.values(cleanScores))
       const resultCategory = Object.keys(cleanScores).find(category => cleanScores[category] === maxScore) || 'medical'
-      const categoryName = getCategoryName(resultCategory)
       
-      console.log('Clean scores:', cleanScores)
-      console.log('Max score:', maxScore, 'Result category:', resultCategory)
-      console.log('Category name:', categoryName)
-      console.log('Category name encoded:', encodeURIComponent(categoryName))
+      // Find the result using the same logic as showFinalResult
+      let selectedResult = results[resultCategory]
       
-      // Build search URL with category filter
-      let searchUrl = `/search?category=${encodeURIComponent(categoryName)}`
-      
-      // Add face shape filter if available
-      if (faceShapeResult && faceShapeResult.faceShape && hasProductsWithExactShape) {
-        const recommendedShape = getRecommendedGlassesShape(faceShapeResult.faceShape)
-        console.log('Face shape:', faceShapeResult.faceShape, 'Recommended shape:', recommendedShape)
-        
-        // Use English shape names directly since that's what's stored in the database
-        searchUrl += `&glassesShape=${encodeURIComponent(recommendedShape)}`
-        console.log('Added face shape filter (English):', recommendedShape)
-        console.log('Full search URL being generated:', searchUrl)
-      } else {
-        console.log('Not adding glasses shape filter - hasProductsWithExactShape:', hasProductsWithExactShape)
+      if (!selectedResult) {
+        const availableResults = Object.values(results)
+        const categoryName = getCategoryName(resultCategory)
+        selectedResult = availableResults.find(r => r && r.category === categoryName)
       }
       
-      console.log('Final search URL:', searchUrl)
+      if (!selectedResult) {
+        const availableResults = Object.values(results)
+        selectedResult = availableResults[0] // Fallback to first available result
+      }
       
-      // Open in new tab
-      try {
-        window.open(searchUrl, '_blank')
-        console.log('Successfully opened search URL')
-      } catch (error) {
-        console.error('Error opening search URL:', error)
-        // Fallback: try to navigate in same tab
-        window.location.href = searchUrl
+      console.log('Selected result for product display:', selectedResult)
+      
+      if (selectedResult && selectedResult.url) {
+        let searchUrl = selectedResult.url
+        
+        // Add face shape filter if available
+        if (faceShapeResult && faceShapeResult.faceShape && hasProductsWithExactShape) {
+          const recommendedShape = getRecommendedGlassesShape(faceShapeResult.faceShape)
+          console.log('Face shape:', faceShapeResult.faceShape, 'Recommended shape:', recommendedShape)
+          
+          // Add face shape filter to the URL
+          const separator = searchUrl.includes('?') ? '&' : '?'
+          searchUrl += `${separator}glassesShape=${encodeURIComponent(recommendedShape)}`
+          console.log('Added face shape filter:', recommendedShape)
+        }
+        
+        console.log('Final search URL:', searchUrl)
+        
+        // Open in new tab
+        try {
+          window.open(searchUrl, '_blank')
+          console.log('Successfully opened search URL')
+        } catch (error) {
+          console.error('Error opening search URL:', error)
+          // Fallback: try to navigate in same tab
+          window.location.href = searchUrl
+        }
+      } else {
+        console.error('No result found for product display')
+        toast({
+          variant: 'destructive',
+          description: 'عذراً، لم يتم العثور على منتجات للعرض',
+        })
       }
       
       setMessages(prev => [...prev, {

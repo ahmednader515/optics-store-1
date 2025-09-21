@@ -395,20 +395,32 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
   }, [])
 
   const addResult = () => {
-    const newKey = `result-${Date.now()}`
+    // Find the first available category that doesn't have a result yet
+    const existingResultKeys = Object.keys(content.results || {})
+    const availableCategory = categories.find(cat => !existingResultKeys.includes(cat.slug))
+    
+    if (!availableCategory) {
+      toast({
+        title: 'لا يمكن إضافة المزيد من النتائج',
+        description: 'جميع الفئات لها نتائج بالفعل',
+        variant: 'destructive'
+      })
+      return
+    }
+    
     const newResult: ChatResult = {
-      category: categories.length > 0 ? categories[0].name : 'فئة جديدة',
-      title: 'النظارات المناسبة',
-      description: 'بناءً على إجاباتك، ننصحك بهذه النظارات المناسبة لاحتياجاتك.',
+      category: availableCategory.name,
+      title: `${availableCategory.name} المناسبة لك`,
+      description: `منتجات عالية الجودة من فئة ${availableCategory.name} مع أفضل التقنيات والمواد.`,
       icon: 'Heart',
       color: 'bg-gray-500',
-      url: categories.length > 0 ? `/search?category=${encodeURIComponent(categories[0].name)}` : '/search?category=فئة-جديدة'
+      url: `/search?category=${encodeURIComponent(availableCategory.name)}`
     }
     setContent(prev => ({
       ...prev,
       results: {
         ...(prev.results || {}),
-        [newKey]: newResult
+        [availableCategory.slug]: newResult
       }
     }))
   }
@@ -813,7 +825,10 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
             <Card key={key}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">{result.category}</CardTitle>
+                  <div>
+                    <CardTitle className="text-sm">{result.category}</CardTitle>
+                    <p className="text-xs text-gray-500 mt-1">Key: {key}</p>
+                  </div>
                   <Button
                     onClick={() => deleteResult(key)}
                     variant="destructive"
