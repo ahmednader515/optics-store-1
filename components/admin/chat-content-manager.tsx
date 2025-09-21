@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -241,12 +241,16 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     })
   }
 
-  // Update parent component when content changes (without triggering save)
+  // Update parent component when content changes (with debouncing to prevent excessive updates)
   useEffect(() => {
     if (content && Object.keys(content).length > 0) {
-      onSave(content)
+      const timeoutId = setTimeout(() => {
+        onSave(content)
+      }, 300) // Debounce updates by 300ms
+      
+      return () => clearTimeout(timeoutId)
     }
-  }, [content]) // Remove onSave from dependencies to prevent infinite loop
+  }, [content, onSave])
 
   // Reset current question index when switching to questions tab
   useEffect(() => {
@@ -300,14 +304,14 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     setCurrentQuestionIndex((prev.questions || []).length)
   }
 
-  const updateQuestion = (index: number, field: keyof ChatQuestion, value: any) => {
+  const updateQuestion = useCallback((index: number, field: keyof ChatQuestion, value: any) => {
     setContent(prev => ({
       ...prev,
       questions: (prev.questions || []).map((q, i) => 
         i === index ? { ...q, [field]: value } : q
       )
     }))
-  }
+  }, [])
 
   const deleteQuestion = (index: number) => {
     setContent(prev => {
@@ -350,7 +354,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     scrollToLastOption()
   }
 
-  const updateOption = (questionIndex: number, optionIndex: number, field: keyof ChatOption, value: any) => {
+  const updateOption = useCallback((questionIndex: number, optionIndex: number, field: keyof ChatOption, value: any) => {
     setContent(prev => ({
       ...prev,
       questions: (prev.questions || []).map((q, i) => 
@@ -364,7 +368,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
           : q
       )
     }))
-  }
+  }, [])
 
   const deleteOption = (questionIndex: number, optionIndex: number) => {
     setContent(prev => ({
@@ -377,7 +381,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
     }))
   }
 
-  const updateResult = (key: string, field: keyof ChatResult, value: string) => {
+  const updateResult = useCallback((key: string, field: keyof ChatResult, value: string) => {
     setContent(prev => ({
       ...prev,
       results: {
@@ -388,7 +392,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
         }
       }
     }))
-  }
+  }, [])
 
   const addResult = () => {
     const newKey = `result-${Date.now()}`
@@ -495,6 +499,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
               <div>
                 <Label htmlFor="welcomeMessage">نص رسالة الترحيب</Label>
                 <Textarea
+                  key="welcomeMessage"
                   id="welcomeMessage"
                   value={content.welcomeMessage}
                   onChange={(e) => setContent(prev => ({ ...prev, welcomeMessage: e.target.value }))}
@@ -649,6 +654,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                         <div>
                           <Label htmlFor={`question-${questionIndex}`} className="text-base font-medium">نص السؤال</Label>
                           <Input
+                            key={`question-${question.id}-${questionIndex}`}
                             id={`question-${questionIndex}`}
                             value={question.question}
                             onChange={(e) => updateQuestion(questionIndex, 'question', e.target.value)}
@@ -690,6 +696,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                                   <div>
                                     <Label htmlFor={`option-text-${questionIndex}-${optionIndex}`} className="text-sm">نص الخيار</Label>
                                     <Input
+                                      key={`option-text-${option.id}-${questionIndex}-${optionIndex}`}
                                       id={`option-text-${questionIndex}-${optionIndex}`}
                                       value={option.text}
                                       onChange={(e) => updateOption(questionIndex, optionIndex, 'text', e.target.value)}
@@ -745,6 +752,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                                             {category.name}
                                           </Label>
                                           <Input
+                                            key={`score-${option.id}-${questionIndex}-${optionIndex}-${category.slug}`}
                                             id={`score-${questionIndex}-${optionIndex}-${category.slug}`}
                                             type="number"
                                             min="0"
@@ -820,6 +828,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                   <div>
                     <Label htmlFor={`result-category-${key}`}>الفئة</Label>
                     <Input
+                      key={`result-category-${key}`}
                       id={`result-category-${key}`}
                       value={result.category}
                       onChange={(e) => updateResult(key, 'category', e.target.value)}
@@ -830,6 +839,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                   <div>
                     <Label htmlFor={`result-title-${key}`}>العنوان</Label>
                     <Input
+                      key={`result-title-${key}`}
                       id={`result-title-${key}`}
                       value={result.title}
                       onChange={(e) => updateResult(key, 'title', e.target.value)}
@@ -862,6 +872,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                     <Label htmlFor={`result-color-${key}`}>اللون</Label>
                     <div className="flex items-center space-x-2 mt-2">
                       <Input
+                        key={`result-color-${key}`}
                         id={`result-color-${key}`}
                         value={result.color}
                         onChange={(e) => updateResult(key, 'color', e.target.value)}
@@ -878,6 +889,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                   <div>
                     <Label htmlFor={`result-url-${key}`}>الرابط</Label>
                     <Input
+                      key={`result-url-${key}`}
                       id={`result-url-${key}`}
                       value={result.url}
                       onChange={(e) => updateResult(key, 'url', e.target.value)}
@@ -889,6 +901,7 @@ export default function ChatContentManager({ chatContent, onSave }: ChatContentM
                 <div>
                   <Label htmlFor={`result-description-${key}`}>الوصف</Label>
                   <Textarea
+                    key={`result-description-${key}`}
                     id={`result-description-${key}`}
                     value={result.description}
                     onChange={(e) => updateResult(key, 'description', e.target.value)}
