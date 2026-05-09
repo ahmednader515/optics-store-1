@@ -19,6 +19,7 @@ import { buttonVariants } from '@/components/ui/button'
 import ProductPrice from '../product/product-price'
 import ActionButton from '../action-button'
 import { deliverOrder, updateOrderToPaid, markOrderOutForDelivery } from '@/lib/actions/order.actions'
+import { IMG_FALLBACK_PRODUCT } from '@/lib/image-defaults'
 
 export default function OrderDetailsForm({
   order,
@@ -189,7 +190,7 @@ export default function OrderDetailsForm({
                         className='flex items-center'
                       >
                         <Image
-                          src={item.image || '/placeholder-image.jpg'}
+                          src={item.image || IMG_FALLBACK_PRODUCT}
                           alt={item.name || 'Product'}
                           width={50}
                           height={50}

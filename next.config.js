@@ -2,6 +2,8 @@ const nextConfig = {
   /* config options here */
 
   images: {
+    // Avoid optimizer fetching remote URLs (fixes many Unsplash/dev-server failures on Windows).
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -11,6 +13,11 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'via.placeholder.com',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
         port: '',
       },
     ],
@@ -32,7 +39,6 @@ const nextConfig = {
   
   // Performance optimizations
   experimental: {
-    optimizePackageImports: ['@prisma/client'],
     // Enable server actions (correct format)
     serverActions: {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],

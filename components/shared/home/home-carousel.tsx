@@ -139,6 +139,7 @@ export default function HomeCarousel({ carousels }: HomeCarouselProps) {
             src={carousels[currentSlide].image}
             alt={carousels[currentSlide].title}
             fill
+            sizes="100vw"
             className={`object-cover transition-all duration-300 ease-in-out ${
               isTransitioning ? 'blur-sm scale-105' : 'blur-none scale-100'
             }`}

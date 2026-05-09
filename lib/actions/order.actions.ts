@@ -10,6 +10,7 @@ import { sendAskReviewOrderItems, sendPurchaseReceipt } from '@/lib/services/ema
 
 import { DateRange } from 'react-day-picker'
 import data from '../data'
+import { IMG_FALLBACK_PRODUCT } from '@/lib/image-defaults'
 
 // Lightweight in-memory cache for admin overview
 const overviewCache = new Map<string, { data: any; ts: number }>()
@@ -718,7 +719,7 @@ async function getTopSalesProductsFast(date: DateRange) {
     
     const prev = productSales.get(r.productId) || { 
       name: product.name, 
-      image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : '/images/placeholder.jpg',
+      image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : IMG_FALLBACK_PRODUCT,
       totalSales: 0,
       slug: product.slug
     }

@@ -1,4 +1,5 @@
-import { EllipsisVertical } from 'lucide-react'
+import Link from 'next/link'
+import { EllipsisVertical, LayoutDashboard } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -7,6 +8,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import CartButton from './cart-button'
 import UserButton from './user-button'
 import { auth } from '@/auth'
@@ -16,21 +19,35 @@ const Menu = async ({ forAdmin = false }: { forAdmin?: boolean }) => {
 
   return (
     <div className='flex justify-end'>
-      <nav className='md:flex gap-3 hidden w-full'>
-        <UserButton 
-          session={session} 
-          translations={{
-            hello: 'مرحباً',
-            signIn: 'تسجيل الدخول',
-            accountOrders: 'الحساب والطلبات',
-            yourAccount: 'حسابك',
-            yourOrders: 'طلباتك',
-            admin: 'المدير',
-            signOut: 'تسجيل الخروج',
-            newCustomer: 'عميل جديد',
-            signUp: 'إنشاء حساب'
-          }} 
-        />
+      <nav className='md:flex gap-3 hidden w-full items-center'>
+        <div className='flex items-center gap-2'>
+          {session?.user?.role === 'Admin' && (
+            <Link
+              href='/admin/overview'
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'sm' }),
+                'gap-1.5 border-primary text-primary hover:bg-primary hover:text-primary-foreground whitespace-nowrap shrink-0 font-cairo'
+              )}
+            >
+              <LayoutDashboard className='h-4 w-4 shrink-0' aria-hidden />
+              لوحة التحكم
+            </Link>
+          )}
+          <UserButton 
+            session={session} 
+            translations={{
+              hello: 'مرحباً',
+              signIn: 'تسجيل الدخول',
+              accountOrders: 'الحساب والطلبات',
+              yourAccount: 'حسابك',
+              yourOrders: 'طلباتك',
+              admin: 'المدير',
+              signOut: 'تسجيل الخروج',
+              newCustomer: 'عميل جديد',
+              signUp: 'إنشاء حساب'
+            }} 
+          />
+        </div>
         {forAdmin ? null : <CartButton />}
       </nav>
       <nav className='md:hidden'>

@@ -7,6 +7,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
 import { prisma } from '@/lib/db'
+import {
+  CATEGORY_IMAGE_FALLBACKS,
+  IMG_FALLBACK_HERO,
+} from '@/lib/image-defaults'
 
 export const runtime = 'nodejs'
 
@@ -60,10 +64,7 @@ async function CategoriesSection({ categories }: { categories: Array<{
     image: string | null;
   }>;
 }> }) {
-  const sampleImages = [
-    '/images/shoes.jpg', '/images/t-shirts.jpg', '/images/wrist-watches.jpg',
-    '/images/jeans.jpg', '/images/p11-1.jpg', '/images/p12-1.jpg'
-  ]
+  const sampleImages = [...CATEGORY_IMAGE_FALLBACKS]
 
   return (
     <Card className='w-full rounded-xl shadow-sm categories-mobile md:!mx-0 md:!my-0 md:!rounded-xl md:!shadow-sm'>
@@ -247,19 +248,21 @@ export default async function HomePage() {
         {
           title: 'النظارات الطبية',
           buttonCaption: 'تسوق الآن',
-          image: '/images/banner3.jpg',
+          image: IMG_FALLBACK_HERO,
           url: '/search?category=النظارات الطبية',
         },
         {
           title: 'النظارات الشمسية',
           buttonCaption: 'تسوق الآن',
-          image: '/images/banner1.jpg',
+          image:
+            'https://images.unsplash.com/photo-1511499767150-a48a237e0083?w=1920&q=80',
           url: '/search?category=النظارات الشمسية',
         },
         {
           title: 'العدسات اللاصقة',
           buttonCaption: 'شاهد المزيد',
-          image: '/images/banner2.jpg',
+          image:
+            'https://images.unsplash.com/photo-1579686385129-b041ba745efe?w=1920&q=80',
           url: '/search?category=العدسات اللاصقة',
         }
       ]} />

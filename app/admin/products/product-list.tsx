@@ -18,6 +18,7 @@ import { formatDateTime } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { deleteProduct } from '@/lib/actions/product.actions'
 import { useToast } from '@/hooks/use-toast'
+import { IMG_FALLBACK_PRODUCT } from '@/lib/image-defaults'
 
 type Product = {
   id: string
@@ -225,7 +226,7 @@ const ProductList = ({ initialProducts, totalProducts }: ProductListProps) => {
                     <TableCell className='text-right py-4 px-4'>
                       <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200">
                         <Image
-                          src={product.images[0] || '/images/placeholder.jpg'}
+                          src={product.images[0] || IMG_FALLBACK_PRODUCT}
                           alt={product.name}
                           width={64}
                           height={64}
@@ -307,7 +308,7 @@ const ProductList = ({ initialProducts, totalProducts }: ProductListProps) => {
                 <div className="flex items-center gap-3">
                   <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200 flex-shrink-0">
                     <Image
-                      src={product.images[0] || '/images/placeholder.jpg'}
+                      src={product.images[0] || IMG_FALLBACK_PRODUCT}
                       alt={product.name}
                       width={64}
                       height={64}

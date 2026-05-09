@@ -1,12 +1,11 @@
-import { PrismaClient } from '@prisma/client/edge'
-import { withAccelerate } from '@prisma/extension-accelerate'
+import { PrismaClient } from '@prisma/client'
 import { loadEnvFromFile } from '../env-loader'
-import data from '../data'
+import data, { categoriesForSeed } from '../data'
 
 // Load environment variables from .env file
 loadEnvFromFile()
 
-const prisma = new PrismaClient().$extends(withAccelerate())
+const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Starting Prisma seed...')
@@ -18,6 +17,7 @@ async function main() {
   await prisma.review.deleteMany()
   await prisma.userAddress.deleteMany()
   await prisma.user.deleteMany()
+  await prisma.subCategory.deleteMany()
   await prisma.product.deleteMany()
   await prisma.category.deleteMany()
   await prisma.setting.deleteMany()
@@ -56,16 +56,9 @@ async function main() {
 
   console.log(`👥 Created ${users.length} users`)
 
-  // Create categories
+  // Create categories (aligned with product.category strings and carousel links)
   const categories = await Promise.all(
-    [
-      { name: 'النظارات الطبية', description: 'نظارات طبية عالية الجودة', slug: 'medical-glasses', sortOrder: 0 },
-      { name: 'النظارات الشمسية', description: 'نظارات شمسية أنيقة', slug: 'sunglasses', sortOrder: 1 },
-      { name: 'العدسات اللاصقة', description: 'عدسات لاصقة مريحة', slug: 'contact-lenses', sortOrder: 2 },
-      { name: 'مستلزمات العناية', description: 'منتجات العناية بالعين', slug: 'eye-care', sortOrder: 3 },
-      { name: 'إطارات النظارات', description: 'إطارات عصرية وأنيقة', slug: 'frames', sortOrder: 4 },
-      { name: 'أدوات البصريات', description: 'أدوات ومعدات البصريات', slug: 'optical-tools', sortOrder: 5 },
-    ].map((categoryData) =>
+    categoriesForSeed.map((categoryData) =>
       prisma.category.create({
         data: {
           name: categoryData.name,
@@ -73,7 +66,8 @@ async function main() {
           slug: categoryData.slug,
           isActive: true,
           sortOrder: categoryData.sortOrder,
-        }
+          image: categoryData.image,
+        },
       })
     )
   )

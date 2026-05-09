@@ -1,7 +1,7 @@
-
 'use client'
 import Image from 'next/image'
 import { useState } from 'react'
+import { IMG_FALLBACK_PRODUCT } from '@/lib/image-defaults'
 
 const ImageHover = ({
   src,
@@ -25,7 +25,7 @@ const ImageHover = ({
   }
 
   // Validate image sources
-  const validSrc = src && src.trim() !== '' ? src : '/placeholder-image.jpg'
+  const validSrc = src && src.trim() !== '' ? src : IMG_FALLBACK_PRODUCT
   const validHoverSrc = hoverSrc && hoverSrc.trim() !== '' ? hoverSrc : validSrc
 
   return (

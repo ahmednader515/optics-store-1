@@ -6,6 +6,7 @@ import { Clock, Eye, Trash2, X } from 'lucide-react'
 import useBrowsingHistory from '@/hooks/use-browsing-history'
 import Link from 'next/link'
 import Image from 'next/image'
+import { IMG_FALLBACK_PRODUCT } from '@/lib/image-defaults'
 
 export default function BrowsingHistoryList() {
   const { products, clear, removeItem } = useBrowsingHistory()
@@ -57,7 +58,7 @@ export default function BrowsingHistoryList() {
               <div className='flex gap-4'>
                 <div className='relative h-20 w-20 flex-shrink-0'>
                   <Image
-                    src={item.image || '/images/p11-1.jpg'}
+                    src={item.image || IMG_FALLBACK_PRODUCT}
                     alt={item.name}
                     fill
                     className='object-cover rounded-md'

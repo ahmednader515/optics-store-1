@@ -245,12 +245,67 @@ const users: IUserInput[] = [
   },
 ]
 
+/** Used by Prisma seed — must match `category` on demo products. */
+export const categoriesForSeed = [
+  {
+    name: 'النظارات الطبية',
+    description: 'نظارات طبية وعدسات لتصحيح النظر',
+    slug: 'medical-glasses',
+    sortOrder: 0,
+    image:
+      'https://images.unsplash.com/photo-1577803640713-968371208f31?w=900&q=85',
+  },
+  {
+    name: 'النظارات الشمسية',
+    description: 'حماية من الأشعة مع أسلوب عصري',
+    slug: 'sunglasses',
+    sortOrder: 1,
+    image:
+      'https://images.unsplash.com/photo-1511499767150-a48a237e0083?w=900&q=85',
+  },
+  {
+    name: 'العدسات اللاصقة',
+    description: 'عدسات يومية وشهرية مريحة',
+    slug: 'contact-lenses',
+    sortOrder: 2,
+    image:
+      'https://images.unsplash.com/photo-1579686385129-b041ba745efe?w=900&q=85',
+  },
+  {
+    name: 'مستلزمات العناية',
+    description: 'محاليل وأدوات نظافة للعدسات والنظارات',
+    slug: 'eye-care',
+    sortOrder: 3,
+    image:
+      'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=900&q=85',
+  },
+  {
+    name: 'إطارات النظارات',
+    description: 'إطارات معدنية وبلاستيكية عصرية',
+    slug: 'frames',
+    sortOrder: 4,
+    image:
+      'https://images.unsplash.com/photo-1509697485642-9891a6e9920e?w=900&q=85',
+  },
+  {
+    name: 'أدوات البصريات',
+    description: 'أدوات صيانة وقياس للعناية اليومية',
+    slug: 'optical-tools',
+    sortOrder: 5,
+    image:
+      'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=900&q=85',
+  },
+] as const
+
 const products: IProductInput[] = [
   {
     name: 'Ray-Ban Aviator Classic Sunglasses',
     slug: toSlug('Ray-Ban Aviator Classic Sunglasses'),
     category: 'النظارات الشمسية',
-    images: ['/images/p11-1.jpg', '/images/p11-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=900&q=85',
+      'https://images.unsplash.com/photo-1473496169904-28bf54e69c91?w=900&q=85',
+    ],
     tags: ['best-seller', 'sunglasses', 'premium'],
     isPublished: true,
     price: 189.99,
@@ -276,7 +331,10 @@ const products: IProductInput[] = [
     name: 'Oakley Holbrook Matte Black Sunglasses',
     slug: toSlug('Oakley Holbrook Matte Black Sunglasses'),
     category: 'النظارات الشمسية',
-    images: ['/images/p12-1.jpg', '/images/p12-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1574258495973-f010237bbdee?w=900&q=85',
+      'https://images.unsplash.com/photo-1511499767150-a48a237e0083?w=900&q=85',
+    ],
     tags: ['featured', 'sunglasses', 'sports'],
     isPublished: true,
     price: 159.99,
@@ -303,7 +361,10 @@ const products: IProductInput[] = [
     slug: toSlug('Acuvue Oasys 1-Day Contact Lenses'),
     category: 'العدسات اللاصقة',
     brand: 'Acuvue',
-    images: ['/images/p13-1.jpg', '/images/p13-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1579686385129-b041ba745efe?w=900&q=85',
+      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&q=85',
+    ],
     tags: ['best-seller', 'contact-lenses', 'daily'],
     isPublished: true,
     price: 89.99,
@@ -327,8 +388,11 @@ const products: IProductInput[] = [
   {
     name: 'Warby Parker Percey Reading Glasses',
     slug: toSlug('Warby Parker Percey Reading Glasses'),
-    category: 'نظارات القراءة',
-    images: ['/images/p14-1.jpg', '/images/p14-2.jpg'],
+    category: 'النظارات الطبية',
+    images: [
+      'https://images.unsplash.com/photo-1591076482167-513297969517?w=900&q=85',
+      'https://images.unsplash.com/photo-1486218619249-b85bb5f6db22?w=900&q=85',
+    ],
     tags: ['featured', 'reading-glasses', 'stylish'],
     isPublished: true,
     price: 95.00,
@@ -354,7 +418,10 @@ const products: IProductInput[] = [
     name: 'Opti-Free Puremoist Contact Lens Solution',
     slug: toSlug('Opti-Free Puremoist Contact Lens Solution'),
     category: 'مستلزمات العناية',
-    images: ['/images/p15-1.jpg', '/images/p15-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1559757175-4bdfc37f1ff5?w=900&q=85',
+      'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=900&q=85',
+    ],
     tags: ['contact-lens-solution', 'eye-care'],
     isPublished: true,
     price: 14.99,
@@ -379,8 +446,11 @@ const products: IProductInput[] = [
   {
     name: 'Gunnar Computer Gaming Glasses',
     slug: toSlug('Gunnar Computer Gaming Glasses'),
-    category: 'نظارات الكمبيوتر',
-    images: ['/images/p16-1.jpg', '/images/p16-2.jpg'],
+    category: 'النظارات الطبية',
+    images: [
+      'https://images.unsplash.com/photo-1597655600828-8fbbdb13f30e?w=900&q=85',
+      'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=900&q=85',
+    ],
     tags: ['computer-glasses', 'blue-light-filter', 'gaming'],
     isPublished: true,
     price: 79.99,
@@ -406,7 +476,10 @@ const products: IProductInput[] = [
     name: 'Maui Jim Red Sands Polarized Sunglasses',
     slug: toSlug('Maui Jim Red Sands Polarized Sunglasses'),
     category: 'النظارات الشمسية',
-    images: ['/images/p17-1.jpg', '/images/p17-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&q=85',
+      'https://images.unsplash.com/photo-1439950766655-618643091630?w=900&q=85',
+    ],
     tags: ['sunglasses', 'polarized', 'premium'],
     isPublished: true,
     price: 249.99,
@@ -432,7 +505,10 @@ const products: IProductInput[] = [
     name: 'Bausch + Lomb Biotrue Contact Lens Solution',
     slug: toSlug('Bausch + Lomb Biotrue Contact Lens Solution'),
     category: 'مستلزمات العناية',
-    images: ['/images/p18-1.jpg', '/images/p18-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=900&q=85',
+      'https://images.unsplash.com/photo-1587854692152-cbc660db3918?w=900&q=85',
+    ],
     tags: ['contact-lens-solution', 'eye-care', 'biotrue'],
     isPublished: true,
     price: 16.99,
@@ -458,7 +534,10 @@ const products: IProductInput[] = [
     name: 'Johnson & Johnson 1-Day Acuvue Moist Contact Lenses',
     slug: toSlug('Johnson & Johnson 1-Day Acuvue Moist Contact Lenses'),
     category: 'العدسات اللاصقة',
-    images: ['/images/p19-1.jpg', '/images/p19-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1579686385129-b041ba745efe?w=900&q=85',
+      'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=900&q=85',
+    ],
     tags: ['contact-lenses', 'daily', 'moist'],
     isPublished: true,
     price: 69.99,
@@ -484,7 +563,10 @@ const products: IProductInput[] = [
     name: 'Tom Ford FT-0001 Aviator Sunglasses',
     slug: toSlug('Tom Ford FT-0001 Aviator Sunglasses'),
     category: 'النظارات الشمسية',
-    images: ['/images/p20-1.jpg', '/images/p20-2.jpg'],
+    images: [
+      'https://images.unsplash.com/photo-1577803640713-968371208f31?w=900&q=85',
+      'https://images.unsplash.com/photo-1549692520-acc6669e2f0c?w=900&q=85',
+    ],
     tags: ['sunglasses', 'luxury', 'aviator'],
     isPublished: true,
     price: 399.99,
@@ -504,6 +586,126 @@ const products: IProductInput[] = [
     description: 'Luxury aviator sunglasses with premium acetate frame and gradient lenses. Features superior craftsmanship and timeless design. Perfect for those who appreciate luxury eyewear and sophisticated style.',
     sizes: ['Standard'],
     colors: ['Tortoise/Brown', 'Black/Gray'],
+    reviews: [],
+  },
+  {
+    name: 'Ray-Ban RX Metal Round Frames',
+    slug: toSlug('Ray-Ban RX Metal Round Frames'),
+    category: 'إطارات النظارات',
+    images: [
+      'https://images.unsplash.com/photo-1509697485642-9891a6e9920e?w=900&q=85',
+      'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&q=85',
+    ],
+    tags: ['frames', 'metal', 'round'],
+    isPublished: true,
+    price: 129.99,
+    listPrice: 159.99,
+    brand: 'Ray-Ban',
+    avgRating: 4.5,
+    numReviews: 64,
+    ratingDistribution: [
+      { rating: 1, count: 1 },
+      { rating: 2, count: 2 },
+      { rating: 3, count: 6 },
+      { rating: 4, count: 18 },
+      { rating: 5, count: 37 },
+    ],
+    numSales: 112,
+    countInStock: 38,
+    description:
+      'إطار معدني دائري خفيف الوزن مناسب للعدسات الطبية. تشطيب عالي الجودة ومقاسات متعددة.',
+    sizes: ['50mm', '52mm'],
+    colors: ['Gold', 'Silver', 'Black'],
+    reviews: [],
+  },
+  {
+    name: 'Oakley Wingfold Titanium Frames',
+    slug: toSlug('Oakley Wingfold Titanium Frames'),
+    category: 'إطارات النظارات',
+    images: [
+      'https://images.unsplash.com/photo-1574258495973-f010237bbdee?w=900&q=85',
+      'https://images.unsplash.com/photo-1597655600828-8fbbdb13f30e?w=900&q=85',
+    ],
+    tags: ['frames', 'titanium', 'sport'],
+    isPublished: true,
+    price: 189.0,
+    listPrice: 0,
+    brand: 'Oakley',
+    avgRating: 4.6,
+    numReviews: 41,
+    ratingDistribution: [
+      { rating: 1, count: 0 },
+      { rating: 2, count: 1 },
+      { rating: 3, count: 4 },
+      { rating: 4, count: 12 },
+      { rating: 5, count: 24 },
+    ],
+    numSales: 88,
+    countInStock: 22,
+    description:
+      'إطار تيتانيوم قابل للطي مع قبضة مريحة للاستخدام اليومي والرياضة الخفيفة.',
+    sizes: ['Standard'],
+    colors: ['Gunmetal', 'Satin Black'],
+    reviews: [],
+  },
+  {
+    name: 'ProCare Optical Repair Kit',
+    slug: toSlug('ProCare Optical Repair Kit'),
+    category: 'أدوات البصريات',
+    images: [
+      'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=900&q=85',
+      'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=900&q=85',
+    ],
+    tags: ['tools', 'repair', 'maintenance'],
+    isPublished: true,
+    price: 24.99,
+    listPrice: 34.99,
+    brand: 'ProCare',
+    avgRating: 4.4,
+    numReviews: 52,
+    ratingDistribution: [
+      { rating: 1, count: 1 },
+      { rating: 2, count: 2 },
+      { rating: 3, count: 5 },
+      { rating: 4, count: 14 },
+      { rating: 5, count: 30 },
+    ],
+    numSales: 210,
+    countInStock: 60,
+    description:
+      'مجموعة صيانة للنظارات تشمل مفكات صغيرة، براغي احتياطية، ومشابك أنف.',
+    sizes: ['Kit'],
+    colors: ['Black Case'],
+    reviews: [],
+  },
+  {
+    name: 'LensLab Portable Lens Meter',
+    slug: toSlug('LensLab Portable Lens Meter'),
+    category: 'أدوات البصريات',
+    images: [
+      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&q=85',
+      'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=900&q=85',
+    ],
+    tags: ['tools', 'professional', 'measurement'],
+    isPublished: true,
+    price: 349.0,
+    listPrice: 399.0,
+    brand: 'LensLab',
+    avgRating: 4.2,
+    numReviews: 18,
+    ratingDistribution: [
+      { rating: 1, count: 1 },
+      { rating: 2, count: 1 },
+      { rating: 3, count: 2 },
+      { rating: 4, count: 5 },
+      { rating: 5, count: 9 },
+    ],
+    numSales: 34,
+    countInStock: 8,
+    description:
+      'جهاز محمول لقياس قوة العدسة مناسب للصيانة السريعة في المتاجر الصغيرة.',
+    sizes: ['One size'],
+    colors: ['White'],
     reviews: [],
   },
 ]
@@ -538,7 +740,8 @@ const orders = [
         id: 'item-1',
         productId: 'product-1',
         name: 'Ray-Ban Aviator Classic Sunglasses',
-        image: '/images/p11-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=900&q=85',
         price: 189.99,
         quantity: 2,
         category: 'النظارات الشمسية'
@@ -547,7 +750,8 @@ const orders = [
         id: 'item-2',
         productId: 'product-2',
         name: 'Oakley Holbrook Matte Black Sunglasses',
-        image: '/images/p12-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1574258495973-f010237bbdee?w=900&q=85',
         price: 159.99,
         quantity: 1,
         category: 'النظارات الشمسية'
@@ -585,7 +789,8 @@ const orders = [
         id: 'item-3',
         productId: 'product-3',
         name: 'Acuvue Oasys 1-Day Contact Lenses',
-        image: '/images/p13-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1579686385129-b041ba745efe?w=900&q=85',
         price: 89.99,
         quantity: 1,
         category: 'العدسات اللاصقة'
@@ -594,10 +799,11 @@ const orders = [
         id: 'item-4',
         productId: 'product-4',
         name: 'Warby Parker Percey Reading Glasses',
-        image: '/images/p14-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1591076482167-513297969517?w=900&q=85',
         price: 95.00,
         quantity: 1,
-        category: 'نظارات القراءة'
+        category: 'النظارات الطبية'
       }
     ]
   },
@@ -630,7 +836,8 @@ const orders = [
         id: 'item-5',
         productId: 'product-5',
         name: 'Opti-Free Puremoist Contact Lens Solution',
-        image: '/images/p15-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1559757175-4bdfc37f1ff5?w=900&q=85',
         price: 14.99,
         quantity: 2,
         category: 'مستلزمات العناية'
@@ -639,16 +846,18 @@ const orders = [
         id: 'item-6',
         productId: 'product-6',
         name: 'Gunnar Computer Gaming Glasses',
-        image: '/images/p16-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1597655600828-8fbbdb13f30e?w=900&q=85',
         price: 79.99,
         quantity: 1,
-        category: 'نظارات الكمبيوتر'
+        category: 'النظارات الطبية'
       },
       {
         id: 'item-7',
         productId: 'product-7',
         name: 'Maui Jim Red Sands Polarized Sunglasses',
-        image: '/images/p17-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&q=85',
         price: 249.99,
         quantity: 2,
         category: 'النظارات الشمسية'
@@ -684,7 +893,8 @@ const orders = [
         id: 'item-8',
         productId: 'product-8',
         name: 'Johnson & Johnson 1-Day Acuvue Moist Contact Lenses',
-        image: '/images/p21-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1579686385129-b041ba745efe?w=900&q=85',
         price: 69.99,
         quantity: 2,
         category: 'العدسات اللاصقة'
@@ -693,7 +903,8 @@ const orders = [
         id: 'item-9',
         productId: 'product-9',
         name: 'Tom Ford FT-0001 Aviator Sunglasses',
-        image: '/images/p22-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1577803640713-968371208f31?w=900&q=85',
         price: 399.99,
         quantity: 1,
         category: 'النظارات الشمسية'
@@ -702,7 +913,8 @@ const orders = [
         id: 'item-10',
         productId: 'product-10',
         name: 'Bausch + Lomb Biotrue Contact Lens Solution',
-        image: '/images/p23-1.jpg',
+        image:
+          'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=900&q=85',
         price: 16.99,
         quantity: 1,
         category: 'مستلزمات العناية'
@@ -1193,25 +1405,36 @@ For questions about shipping, please contact our customer service team.`,
         {
           title: 'النظارات الطبية',
           buttonCaption: 'تسوق الآن',
-          image: '/images/banner3.jpg',
+          image:
+            'https://images.unsplash.com/photo-1577803640713-968371208f31?w=1920&q=85',
           url: '/search?category=النظارات الطبية',
         },
         {
           title: 'النظارات الشمسية',
           buttonCaption: 'تسوق الآن',
-          image: '/images/banner1.jpg',
+          image:
+            'https://images.unsplash.com/photo-1511499767150-a48a237e0083?w=1920&q=85',
           url: '/search?category=النظارات الشمسية',
         },
         {
           title: 'العدسات اللاصقة',
           buttonCaption: 'شاهد المزيد',
-          image: '/images/banner2.jpg',
+          image:
+            'https://images.unsplash.com/photo-1579686385129-b041ba745efe?w=1920&q=85',
           url: '/search?category=العدسات اللاصقة',
+        },
+        {
+          title: 'مستلزمات العناية بالعين',
+          buttonCaption: 'اكتشف المزيد',
+          image:
+            'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1920&q=85',
+          url: '/search?category=مستلزمات العناية',
         },
         {
           title: 'اختبار اختيار النظارات المناسبة',
           buttonCaption: 'ابدأ الاختبار',
-          image: '/images/banner1.jpg',
+          image:
+            'https://images.unsplash.com/photo-1574258495973-f010237bbdee?w=1920&q=85',
           url: '/quiz',
         },
       ],

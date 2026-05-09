@@ -28,6 +28,7 @@ import { getProductsByFaceShape } from '@/lib/actions/chat.actions'
 import { getRecommendedGlassesShape, faceShapeDescriptions } from '@/lib/face-shape-mapping'
 import Image from 'next/image'
 import ProductCard from '@/components/shared/product/product-card'
+import { IMG_FALLBACK_PRODUCT } from '@/lib/image-defaults'
 
 // Icon options for chat
 const iconOptions = [
@@ -1239,7 +1240,7 @@ export default function EnhancedGlassesChat({ chatContent }: EnhancedGlassesChat
                               product={{
                                 ...message.product,
                                 id: message.product.id || message.product.slug,
-                                images: message.product.images || [message.product.image || '/images/placeholder.jpg'],
+                                images: message.product.images || [message.product.image || IMG_FALLBACK_PRODUCT],
                                 price: Number(message.product.price),
                                 listPrice: Number(message.product.listPrice || message.product.price),
                                 avgRating: Number(message.product.avgRating || 0),

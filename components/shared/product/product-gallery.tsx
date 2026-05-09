@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { IMG_FALLBACK_PRODUCT } from '@/lib/image-defaults'
 import Zoom from 'react-medium-image-zoom'
 import 'react-medium-image-zoom/dist/styles.css'
 export default function ProductGallery({ images }: { images: string[] }) {
@@ -30,7 +31,7 @@ export default function ProductGallery({ images }: { images: string[] }) {
         <Zoom>
           <div className='relative h-[300px] sm:h-[400px] md:h-[500px]'>
             <Image
-              src={validImages[selectedImage] || '/images/p11-1.jpg'}
+              src={validImages[selectedImage] || IMG_FALLBACK_PRODUCT}
               alt={'product image'}
               fill
               sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw'
@@ -59,7 +60,7 @@ export default function ProductGallery({ images }: { images: string[] }) {
             }`}
           >
             <Image 
-              src={image || '/placeholder-image.jpg'} 
+              src={image || IMG_FALLBACK_PRODUCT} 
               alt={'product image'} 
               width={48} 
               height={48}

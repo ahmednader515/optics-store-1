@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Save, Image as ImageIcon, Upload, Truck, Calculator, DollarSign, GripVertical, Settings, MessageCircle, Video, FolderOpen, Package, Percent } from 'lucide-react'
 import data from '@/lib/data'
+import { IMG_FALLBACK_HERO } from '@/lib/image-defaults'
 import { updateSetting } from '@/lib/actions/setting.actions'
 import { UploadButton } from '@/lib/uploadthing'
 import CategoryManager from '@/components/admin/category-manager'
@@ -302,7 +303,7 @@ export default function SettingsForm({ setting }: { setting: any }) {
       {
         title: 'عنوان جديد',
         buttonCaption: 'زر جديد',
-        image: '/images/banner1.jpg',
+        image: IMG_FALLBACK_HERO,
         url: '/search?category=عنوان جديد'
       }
     ])
